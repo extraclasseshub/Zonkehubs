@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ServiceProvider } from '../../types';
-import { Loader2, MapPin, Phone, Mail, User, Building, Camera, Upload, X, Navigation, Target, Globe, Users, Award, Plus, Trash2 } from 'lucide-react';
+import { Loader2, MapPin, Phone, Mail, User, Building, Camera, Upload, X, Navigation, Target, Globe, Users, Award, Plus, Trash2, Check } from 'lucide-react';
 import { getCurrentLocation, geocodeAddress, LocationCoordinates } from '../../lib/mapbox';
 import ProviderAvailability from './ProviderAvailability';
 import mapboxgl from 'mapbox-gl';
@@ -53,6 +53,8 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [tempMapLocation, setTempMapLocation] = useState<LocationCoordinates | null>(null);
+  const [mapInitialized, setMapInitialized] = useState(false);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
@@ -80,31 +82,39 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
   // Initialize map when showMap becomes true
   useEffect(() => {
     if (showMap && mapContainer.current && !map.current) {
+      const currentLat = formData.location.lat || 40.7128;
+      const currentLng = formData.location.lng || -74.006;
+      
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v12',
-        center: [formData.location.lng || -74.006, formData.location.lat || 40.7128], // Default to NYC
+        center: [currentLng, currentLat],
         zoom: 13
       });
 
       map.current.addControl(new mapboxgl.NavigationControl());
 
-      // Add click handler to set location
+      // Add click handler to set temporary location
       map.current.on('click', (e) => {
         const { lng, lat } = e.lngLat;
-        updateLocationFromCoords(lat, lng);
+        setTempMapLocation({ lat, lng });
+        addMarker(lat, lng);
       });
 
       // Set initial marker if location exists
       if (formData.location.lat && formData.location.lng) {
         addMarker(formData.location.lat, formData.location.lng);
+        setTempMapLocation({ lat: formData.location.lat, lng: formData.location.lng });
       }
+
+      setMapInitialized(true);
     }
 
     return () => {
       if (map.current) {
         map.current.remove();
         map.current = null;
+        setMapInitialized(false);
       }
     };
   }, [showMap]);
@@ -142,43 +152,6 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
     map.current.flyTo({ center: [lng, lat], zoom: 15 });
   };
 
-  const updateLocationFromCoords = async (lat: number, lng: number) => {
-    try {
-      // Reverse geocode to get address
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=pk.eyJ1IjoieGFubmlldGVjaHMiLCJhIjoiY21id2RhYmRxMHlhbzJtczAzMmh5a2xjYiJ9.98IDz3AA1B8oEFsH0g2A0Q&types=place,locality,neighborhood,address`
-      );
-      const data = await response.json();
-      
-      const address = data.features?.[0]?.place_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-      
-      setFormData(prev => ({
-        ...prev,
-        location: { address, lat, lng }
-      }));
-
-      // Auto-hide map after location selection
-      setShowMap(false);
-
-      addMarker(lat, lng);
-    } catch (error) {
-      console.error('Error reverse geocoding:', error);
-      setFormData(prev => ({
-        ...prev,
-        location: { 
-          address: `${lat.toFixed(4)}, ${lng.toFixed(4)}`, 
-          lat, 
-          lng 
-        }
-      }));
-      
-      // Auto-hide map after location selection
-      setShowMap(false);
-      
-      addMarker(lat, lng);
-    }
-  };
-
   const handleGetCurrentLocation = async () => {
     setGettingLocation(true);
     try {
@@ -194,6 +167,7 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
       
       if (map.current) {
         addMarker(currentLocation.lat, currentLocation.lng);
+        setTempMapLocation(currentLocation);
       }
       
       setShowSuggestions(false);
@@ -248,14 +222,61 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
       }
     }));
     
-    // Auto-hide map after location selection
-    setShowMap(false);
-    
     if (map.current) {
       addMarker(suggestion.lat, suggestion.lng);
+      setTempMapLocation(suggestion);
     }
     
     setShowSuggestions(false);
+  };
+
+  const handleMapSelect = async () => {
+    if (!tempMapLocation) return;
+
+    try {
+      // Reverse geocode the temporary location
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${tempMapLocation.lng},${tempMapLocation.lat}.json?access_token=pk.eyJ1IjoieGFubmlldGVjaHMiLCJhIjoiY21id2RhYmRxMHlhbzJtczAzMmh5a2xjYiJ9.98IDz3AA1B8oEFsH0g2A0Q&types=place,locality,neighborhood,address`
+      );
+      const data = await response.json();
+      
+      const address = data.features?.[0]?.place_name || `${tempMapLocation.lat.toFixed(4)}, ${tempMapLocation.lng.toFixed(4)}`;
+      
+      setFormData(prev => ({
+        ...prev,
+        location: {
+          address,
+          lat: tempMapLocation.lat,
+          lng: tempMapLocation.lng,
+        }
+      }));
+      
+      setShowMap(false);
+      setTempMapLocation(null);
+    } catch (error) {
+      console.error('Error reverse geocoding:', error);
+      const address = `${tempMapLocation.lat.toFixed(4)}, ${tempMapLocation.lng.toFixed(4)}`;
+      setFormData(prev => ({
+        ...prev,
+        location: {
+          address,
+          lat: tempMapLocation.lat,
+          lng: tempMapLocation.lng,
+        }
+      }));
+      setShowMap(false);
+      setTempMapLocation(null);
+    }
+  };
+
+  const handleMapCancel = () => {
+    setShowMap(false);
+    setTempMapLocation(null);
+    
+    // Reset marker to original location if it exists
+    if (formData.location.lat && formData.location.lng && map.current) {
+      addMarker(formData.location.lat, formData.location.lng);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -815,17 +836,38 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
                 {/* Map */}
                 {showMap && (
                   <div className="border border-slate-600 rounded-lg overflow-hidden">
-                    <div className="bg-slate-700 px-4 py-2 border-b border-slate-600">
+                    <div className="bg-slate-700 px-4 py-3 border-b border-slate-600">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm text-[#cbd5e1]">Click on the map to set your location</p>
-                        <button
-                          type="button"
-                          onClick={() => setShowMap(false)}
-                          className="text-gray-400 hover:text-white transition-colors"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+                        <div>
+                          <p className="text-sm text-[#cbd5e1] font-medium">Select Location on Map</p>
+                          <p className="text-xs text-gray-400">Click anywhere on the map to set your location</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {tempMapLocation && (
+                            <button
+                              type="button"
+                              onClick={handleMapSelect}
+                              className="bg-[#00c9a7] hover:bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
+                            >
+                              <Check className="h-4 w-4" />
+                              <span>Select This Location</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={handleMapCancel}
+                            className="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-slate-600"
+                            title="Cancel map selection"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
+                      {tempMapLocation && (
+                        <div className="mt-2 text-xs text-green-400">
+                          Selected: {tempMapLocation.lat.toFixed(4)}, {tempMapLocation.lng.toFixed(4)}
+                        </div>
+                      )}
                     </div>
                     <div ref={mapContainer} className="h-64 w-full" />
                   </div>

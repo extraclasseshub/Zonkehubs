@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Filter, Loader2, Navigation, X, Target } from 'lucide-react';
+import { Search, MapPin, Filter, Loader2, Navigation, X, Target, Check } from 'lucide-react';
 import { SearchFilters } from '../../types';
 import { getCurrentLocation, geocodeAddress, LocationCoordinates } from '../../lib/mapbox';
 import mapboxgl from 'mapbox-gl';
@@ -20,6 +20,8 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState('');
+  const [tempMapLocation, setTempMapLocation] = useState<LocationCoordinates | null>(null);
+  const [mapInitialized, setMapInitialized] = useState(false);
   const locationInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -40,22 +42,27 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
 
       map.current.addControl(new mapboxgl.NavigationControl());
 
-      // Add click handler to set location
+      // Add click handler to set temporary location
       map.current.on('click', (e) => {
         const { lng, lat } = e.lngLat;
-        updateLocationFromCoords(lat, lng);
+        setTempMapLocation({ lat, lng });
+        addMarker(lat, lng);
       });
 
       // Set initial marker if location exists
       if (userLocation) {
         addMarker(userLocation.lat, userLocation.lng);
+        setTempMapLocation(userLocation);
       }
+
+      setMapInitialized(true);
     }
 
     return () => {
       if (map.current) {
         map.current.remove();
         map.current = null;
+        setMapInitialized(false);
       }
     };
   }, [showMap, userLocation]);
@@ -124,9 +131,6 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
       setLocation(address);
       setUserLocation(newLocation);
       setShowSuggestions(false);
-      
-      // Auto-hide map after location selection
-      setShowMap(false);
 
       addMarker(lat, lng);
     } catch (error) {
@@ -138,10 +142,6 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
       };
       setLocation(newLocation.address);
       setUserLocation(newLocation);
-      
-      // Auto-hide map after location selection
-      setShowMap(false);
-      
       addMarker(lat, lng);
     }
   };
@@ -158,6 +158,7 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
       
       if (map.current) {
         addMarker(currentLocation.lat, currentLocation.lng);
+        setTempMapLocation(currentLocation);
       }
     } catch (error) {
       setLocationError(error instanceof Error ? error.message : 'Failed to get location');
@@ -203,6 +204,54 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
     
     if (map.current) {
       addMarker(suggestion.lat, suggestion.lng);
+      setTempMapLocation(suggestion);
+    }
+  };
+
+  const handleMapSelect = async () => {
+    if (!tempMapLocation) return;
+
+    try {
+      // Reverse geocode the temporary location
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${tempMapLocation.lng},${tempMapLocation.lat}.json?access_token=pk.eyJ1IjoieGFubmlldGVjaHMiLCJhIjoiY21id2RhYmRxMHlhbzJtczAzMmh5a2xjYiJ9.98IDz3AA1B8oEFsH0g2A0Q&types=place,locality,neighborhood,address`
+      );
+      const data = await response.json();
+      
+      const address = data.features?.[0]?.place_name || `${tempMapLocation.lat.toFixed(4)}, ${tempMapLocation.lng.toFixed(4)}`;
+      
+      const newLocation = { 
+        address, 
+        lat: tempMapLocation.lat, 
+        lng: tempMapLocation.lng 
+      };
+      
+      setLocation(address);
+      setUserLocation(newLocation);
+      setShowMap(false);
+      setTempMapLocation(null);
+    } catch (error) {
+      console.error('Error reverse geocoding:', error);
+      const address = `${tempMapLocation.lat.toFixed(4)}, ${tempMapLocation.lng.toFixed(4)}`;
+      const newLocation = { 
+        address, 
+        lat: tempMapLocation.lat, 
+        lng: tempMapLocation.lng 
+      };
+      setLocation(address);
+      setUserLocation(newLocation);
+      setShowMap(false);
+      setTempMapLocation(null);
+    }
+  };
+
+  const handleMapCancel = () => {
+    setShowMap(false);
+    setTempMapLocation(null);
+    
+    // Reset marker to original location if it exists
+    if (userLocation && map.current) {
+      addMarker(userLocation.lat, userLocation.lng);
     }
   };
 
@@ -221,6 +270,7 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
   const clearLocation = () => {
     setLocation('');
     setUserLocation(null);
+    setTempMapLocation(null);
     setShowSuggestions(false);
     setLocationError('');
     if (marker.current) {
@@ -353,17 +403,38 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
         {/* Map */}
         {showMap && (
           <div className="border border-slate-600 rounded-lg overflow-hidden">
-            <div className="bg-slate-700 px-4 py-2 border-b border-slate-600">
+            <div className="bg-slate-700 px-4 py-3 border-b border-slate-600">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-[#cbd5e1]">Click on the map to set your search location</p>
-                <button
-                  type="button"
-                  onClick={() => setShowMap(false)}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                <div>
+                  <p className="text-sm text-[#cbd5e1] font-medium">Select Location on Map</p>
+                  <p className="text-xs text-gray-400">Click anywhere on the map to set your search location</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {tempMapLocation && (
+                    <button
+                      type="button"
+                      onClick={handleMapSelect}
+                      className="bg-[#00c9a7] hover:bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
+                    >
+                      <Check className="h-4 w-4" />
+                      <span>Select This Location</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleMapCancel}
+                    className="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-slate-600"
+                    title="Cancel map selection"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
+              {tempMapLocation && (
+                <div className="mt-2 text-xs text-green-400">
+                  Selected: {tempMapLocation.lat.toFixed(4)}, {tempMapLocation.lng.toFixed(4)}
+                </div>
+              )}
             </div>
             <div ref={mapContainer} className="h-64 w-full" />
           </div>
