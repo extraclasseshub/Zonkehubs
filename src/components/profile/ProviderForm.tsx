@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ServiceProvider } from '../../types';
-import { Loader2, MapPin, Phone, Mail, User, Building, Camera, Upload, X, Navigation, Target, Globe, Users, Award, Plus, Trash2, Check } from 'lucide-react';
+import { Loader2, MapPin, Phone, Mail, User, Building, Camera, Upload, X, Navigation, Target, Globe, Users, Award, Plus, Trash2, Check, Search } from 'lucide-react';
 import { getCurrentLocation, geocodeAddress, LocationCoordinates } from '../../lib/mapbox';
 import ProviderAvailability from './ProviderAvailability';
 import mapboxgl from 'mapbox-gl';
@@ -54,12 +54,17 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [tempMapLocation, setTempMapLocation] = useState<LocationCoordinates | null>(null);
-  const [mapInitialized, setMapInitialized] = useState(false);
+  const [mapSearchQuery, setMapSearchQuery] = useState('');
+  const [mapSearchResults, setMapSearchResults] = useState<LocationCoordinates[]>([]);
+  const [mapSearching, setMapSearching] = useState(false);
+  const [showMapSearchResults, setShowMapSearchResults] = useState(false);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const locationInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const mapSearchInputRef = useRef<HTMLInputElement>(null);
+  const mapSearchResultsRef = useRef<HTMLDivElement>(null);
 
   const serviceTypes = [
     'Plumbing', 'Electrical', 'Barbering', 'Cleaning', 'Carpentry',
@@ -106,15 +111,12 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
         addMarker(formData.location.lat, formData.location.lng);
         setTempMapLocation({ lat: formData.location.lat, lng: formData.location.lng });
       }
-
-      setMapInitialized(true);
     }
 
     return () => {
       if (map.current) {
         map.current.remove();
         map.current = null;
-        setMapInitialized(false);
       }
     };
   }, [showMap]);
@@ -128,6 +130,14 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
         !locationInputRef.current?.contains(event.target as Node)
       ) {
         setShowSuggestions(false);
+      }
+
+      if (
+        mapSearchResultsRef.current &&
+        !mapSearchResultsRef.current.contains(event.target as Node) &&
+        !mapSearchInputRef.current?.contains(event.target as Node)
+      ) {
+        setShowMapSearchResults(false);
       }
     };
 
@@ -144,12 +154,47 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
     }
 
     // Add new marker
-    marker.current = new mapboxgl.Marker({ color: '#3db2ff' })
+    marker.current = new mapboxgl.Marker({ 
+      color: '#3db2ff',
+      draggable: true
+    })
       .setLngLat([lng, lat])
       .addTo(map.current);
 
+    // Add drag end event to update location
+    marker.current.on('dragend', () => {
+      const lngLat = marker.current?.getLngLat();
+      if (lngLat) {
+        setTempMapLocation({ lat: lngLat.lat, lng: lngLat.lng });
+      }
+    });
+
     // Center map on marker
     map.current.flyTo({ center: [lng, lat], zoom: 15 });
+  };
+
+  const handleMapSearch = async () => {
+    if (!mapSearchQuery.trim() || mapSearchQuery.length < 3) return;
+    
+    setMapSearching(true);
+    try {
+      const results = await geocodeAddress(mapSearchQuery);
+      setMapSearchResults(results.slice(0, 5));
+      setShowMapSearchResults(true);
+    } catch (error) {
+      console.error('Map search error:', error);
+    } finally {
+      setMapSearching(false);
+    }
+  };
+
+  const handleMapSearchResultClick = (result: LocationCoordinates) => {
+    if (!map.current) return;
+    
+    setTempMapLocation(result);
+    addMarker(result.lat, result.lng);
+    setShowMapSearchResults(false);
+    setMapSearchQuery('');
   };
 
   const handleGetCurrentLocation = async () => {
@@ -869,7 +914,92 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
                         </div>
                       )}
                     </div>
+                    
+                    {/* Map Search Bar */}
+                    <div className="bg-slate-800 p-3 border-b border-slate-600">
+                      <div className="flex space-x-2">
+                        <div className="relative flex-1">
+                          <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <input
+                            ref={mapSearchInputRef}
+                            type="text"
+                            value={mapSearchQuery}
+                            onChange={(e) => setMapSearchQuery(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleMapSearch())}
+                            placeholder="Search for a location on the map"
+                            className="w-full pl-9 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none text-sm"
+                          />
+                          {mapSearchQuery && (
+                            <button
+                              type="button"
+                              onClick={() => setMapSearchQuery('')}
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleMapSearch}
+                          disabled={mapSearching || mapSearchQuery.length < 3}
+                          className="bg-[#3db2ff] hover:bg-blue-500 disabled:bg-gray-600 text-white px-3 py-2 rounded-md transition-colors flex items-center space-x-1"
+                        >
+                          {mapSearching ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Search className="h-4 w-4" />
+                          )}
+                          <span>Search</span>
+                        </button>
+                      </div>
+                      
+                      {/* Map Search Results */}
+                      {showMapSearchResults && mapSearchResults.length > 0 && (
+                        <div
+                          ref={mapSearchResultsRef}
+                          className="mt-2 bg-slate-700 border border-slate-600 rounded-md shadow-lg max-h-40 overflow-y-auto"
+                        >
+                          {mapSearchResults.map((result, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() => handleMapSearchResultClick(result)}
+                              className="w-full text-left px-3 py-2 hover:bg-slate-600 transition-colors border-b border-slate-600 last:border-b-0"
+                            >
+                              <div className="flex items-start space-x-2">
+                                <MapPin className="h-4 w-4 text-[#3db2ff] mt-0.5 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-white text-sm truncate">{result.address}</p>
+                                  <p className="text-gray-400 text-xs">
+                                    {result.lat.toFixed(4)}, {result.lng.toFixed(4)}
+                                  </p>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
                     <div ref={mapContainer} className="h-64 w-full" />
+                    
+                    {/* Map Instructions */}
+                    <div className="bg-slate-800 p-3 border-t border-slate-600 text-xs text-[#cbd5e1]">
+                      <div className="flex items-start space-x-2">
+                        <div className="flex-shrink-0 mt-0.5">
+                          <div className="w-4 h-4 rounded-full bg-[#3db2ff] flex items-center justify-center">
+                            <span className="text-white text-[10px]">i</span>
+                          </div>
+                        </div>
+                        <div>
+                          <p>• Click anywhere on the map to place a pin</p>
+                          <p>• Drag the pin to adjust the exact location</p>
+                          <p>• Use the search box to find specific places</p>
+                          <p>• Click "Select This Location" when done</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
