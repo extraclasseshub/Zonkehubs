@@ -13,6 +13,19 @@ export interface ServiceProvider extends User {
   serviceType: string;
   description: string;
   phone?: string;
+  website?: string;
+  socialMedia?: {
+    facebook?: string;
+    instagram?: string;
+    twitter?: string;
+    linkedin?: string;
+    youtube?: string;
+    tiktok?: string;
+    whatsapp?: string;
+  };
+  specialties?: string[];
+  yearsExperience?: number;
+  certifications?: string[];
   location: {
     address: string;
     lat: number;

@@ -180,6 +180,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           serviceType: providerData?.service_type || '',
           description: providerData?.description || '',
           phone: providerData?.phone || undefined,
+          website: providerData?.website || undefined,
+          socialMedia: providerData?.social_media || {},
+          specialties: providerData?.specialties || [],
+          yearsExperience: providerData?.years_experience || 0,
+          certifications: providerData?.certifications || [],
           location: {
             address: providerData?.address || '',
             lat: providerData?.latitude || 0,
@@ -505,6 +510,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.serviceType !== undefined) providerUpdates.service_type = data.serviceType;
       if (data.description !== undefined) providerUpdates.description = data.description;
       if (data.phone !== undefined) providerUpdates.phone = data.phone;
+      if (data.website !== undefined) providerUpdates.website = data.website;
+      if (data.socialMedia !== undefined) providerUpdates.social_media = data.socialMedia;
+      if (data.specialties !== undefined) providerUpdates.specialties = data.specialties;
+      if (data.yearsExperience !== undefined) providerUpdates.years_experience = data.yearsExperience;
+      if (data.certifications !== undefined) providerUpdates.certifications = data.certifications;
       if (data.location?.address !== undefined) providerUpdates.address = data.location.address;
       if (data.location?.lat !== undefined) providerUpdates.latitude = data.location.lat;
       if (data.location?.lng !== undefined) providerUpdates.longitude = data.location.lng;
@@ -769,6 +779,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             serviceType: providerData.service_type,
             description: providerData.description,
             phone: providerData.phone || undefined,
+            website: providerData.website || undefined,
+            socialMedia: providerData.social_media || {},
+            specialties: providerData.specialties || [],
+            yearsExperience: providerData.years_experience || 0,
+            certifications: providerData.certifications || [],
             location: {
               address: providerData.address,
               lat: providerData.latitude,

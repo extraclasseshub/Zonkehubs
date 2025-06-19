@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ServiceProvider } from '../../types';
-import { Loader2, MapPin, Phone, Mail, User, Building, Camera, Upload, X, Navigation, Target } from 'lucide-react';
+import { Loader2, MapPin, Phone, Mail, User, Building, Camera, Upload, X, Navigation, Target, Globe, Users, Award, Plus, Trash2 } from 'lucide-react';
 import { getCurrentLocation, geocodeAddress, LocationCoordinates } from '../../lib/mapbox';
 import ProviderAvailability from './ProviderAvailability';
 import mapboxgl from 'mapbox-gl';
@@ -12,13 +12,26 @@ interface ProviderFormProps {
 }
 
 export default function ProviderForm({ initialData, onSubmit, loading }: ProviderFormProps) {
-  const [activeTab, setActiveTab] = useState<'basic' | 'availability'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'details' | 'availability'>('basic');
   const [formData, setFormData] = useState({
     businessName: initialData?.businessName || '',
     businessType: initialData?.businessType || 'individual',
     serviceType: initialData?.serviceType || '',
     description: initialData?.description || '',
     phone: initialData?.phone || '',
+    website: initialData?.website || '',
+    socialMedia: initialData?.socialMedia || {
+      facebook: '',
+      instagram: '',
+      twitter: '',
+      linkedin: '',
+      youtube: '',
+      tiktok: '',
+      whatsapp: '',
+    },
+    specialties: initialData?.specialties || [],
+    yearsExperience: initialData?.yearsExperience || 0,
+    certifications: initialData?.certifications || [],
     location: {
       address: initialData?.location?.address || '',
       lat: initialData?.location?.lat || 0,
@@ -35,6 +48,8 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
   const [gettingLocation, setGettingLocation] = useState(false);
   const [locationSuggestions, setLocationSuggestions] = useState<LocationCoordinates[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [newSpecialty, setNewSpecialty] = useState('');
+  const [newCertification, setNewCertification] = useState('');
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
@@ -48,6 +63,16 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
   ];
 
   const radiusOptions = [5, 10, 15, 20, 25, 30, 50];
+
+  const socialPlatforms = [
+    { key: 'facebook', label: 'Facebook', placeholder: 'https://facebook.com/yourpage' },
+    { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/yourusername' },
+    { key: 'twitter', label: 'Twitter/X', placeholder: 'https://twitter.com/yourusername' },
+    { key: 'linkedin', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/yourprofile' },
+    { key: 'youtube', label: 'YouTube', placeholder: 'https://youtube.com/c/yourchannel' },
+    { key: 'tiktok', label: 'TikTok', placeholder: 'https://tiktok.com/@yourusername' },
+    { key: 'whatsapp', label: 'WhatsApp', placeholder: '+1234567890 or WhatsApp Business link' },
+  ];
 
   // Initialize map when showMap becomes true
   useEffect(() => {
@@ -220,6 +245,9 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
       }
     }));
     
+    // Auto-hide map after location selection
+    setShowMap(false);
+    
     if (map.current) {
       addMarker(suggestion.lat, suggestion.lng);
     }
@@ -230,10 +258,10 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    if (name === 'workRadius') {
+    if (name === 'workRadius' || name === 'yearsExperience') {
       setFormData(prev => ({
         ...prev,
-        workRadius: parseInt(value)
+        [name]: parseInt(value) || 0
       }));
     } else {
       setFormData(prev => ({
@@ -241,6 +269,50 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
         [name]: value
       }));
     }
+  };
+
+  const handleSocialMediaChange = (platform: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      socialMedia: {
+        ...prev.socialMedia,
+        [platform]: value
+      }
+    }));
+  };
+
+  const handleAddSpecialty = () => {
+    if (newSpecialty.trim() && !formData.specialties.includes(newSpecialty.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        specialties: [...prev.specialties, newSpecialty.trim()]
+      }));
+      setNewSpecialty('');
+    }
+  };
+
+  const handleRemoveSpecialty = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      specialties: prev.specialties.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleAddCertification = () => {
+    if (newCertification.trim() && !formData.certifications.includes(newCertification.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        certifications: [...prev.certifications, newCertification.trim()]
+      }));
+      setNewCertification('');
+    }
+  };
+
+  const handleRemoveCertification = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      certifications: prev.certifications.filter((_, i) => i !== index)
+    }));
   };
 
   const handleProfileImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -279,6 +351,7 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
   };
 
   const handleAvailabilitySave = async (availability: any) => {
+    console.log('📅 Availability data received in form:', availability);
     setFormData(prev => ({
       ...prev,
       availability
@@ -287,7 +360,21 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData);
+    
+    // Clean up social media data - remove empty fields
+    const cleanedSocialMedia = Object.fromEntries(
+      Object.entries(formData.socialMedia).filter(([_, value]) => value && value.trim() !== '')
+    );
+    
+    const submissionData = {
+      ...formData,
+      socialMedia: cleanedSocialMedia,
+      specialties: formData.specialties.filter(s => s.trim() !== ''),
+      certifications: formData.certifications.filter(c => c.trim() !== ''),
+    };
+    
+    console.log('📝 Submitting form data:', submissionData);
+    await onSubmit(submissionData);
   };
 
   return (
@@ -310,6 +397,16 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
                 }`}
               >
                 Basic Information
+              </button>
+              <button
+                onClick={() => setActiveTab('details')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'details'
+                    ? 'border-[#3db2ff] text-[#3db2ff]'
+                    : 'border-transparent text-[#cbd5e1] hover:text-white hover:border-slate-500'
+                }`}
+              >
+                Additional Details
               </button>
               <button
                 onClick={() => setActiveTab('availability')}
@@ -546,22 +643,44 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
               </div>
             </div>
 
-            {/* Phone */}
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-[#cbd5e1] mb-2">
-                Phone Number
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none"
-                  placeholder="+1-555-0123"
-                />
+            {/* Contact Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Phone */}
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-[#cbd5e1] mb-2">
+                  Phone Number
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none"
+                    placeholder="+1-555-0123"
+                  />
+                </div>
+              </div>
+
+              {/* Website */}
+              <div>
+                <label htmlFor="website" className="block text-sm font-medium text-[#cbd5e1] mb-2">
+                  Website
+                </label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="url"
+                    id="website"
+                    name="website"
+                    value={formData.website}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none"
+                    placeholder="https://yourwebsite.com"
+                  />
+                </div>
               </div>
             </div>
 
@@ -706,6 +825,157 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
                   </>
                 ) : (
                   'Save Profile'
+                )}
+              </button>
+            </div>
+          </form>
+        ) : activeTab === 'details' ? (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Social Media Links */}
+            <div>
+              <label className="block text-sm font-medium text-[#cbd5e1] mb-3">
+                Social Media & Contact Links
+              </label>
+              <div className="space-y-4">
+                {socialPlatforms.map(platform => (
+                  <div key={platform.key}>
+                    <label className="block text-xs font-medium text-[#cbd5e1] mb-1">
+                      {platform.label}
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.socialMedia[platform.key as keyof typeof formData.socialMedia] || ''}
+                      onChange={(e) => handleSocialMediaChange(platform.key, e.target.value)}
+                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none"
+                      placeholder={platform.placeholder}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Years of Experience */}
+            <div>
+              <label htmlFor="yearsExperience" className="block text-sm font-medium text-[#cbd5e1] mb-2">
+                Years of Experience
+              </label>
+              <div className="relative">
+                <Award className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="number"
+                  id="yearsExperience"
+                  name="yearsExperience"
+                  value={formData.yearsExperience}
+                  onChange={handleInputChange}
+                  min="0"
+                  max="50"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            {/* Specialties */}
+            <div>
+              <label className="block text-sm font-medium text-[#cbd5e1] mb-3">
+                Specialties
+              </label>
+              <div className="space-y-3">
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={newSpecialty}
+                    onChange={(e) => setNewSpecialty(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSpecialty())}
+                    className="flex-1 px-4 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none"
+                    placeholder="e.g., House wiring, Commercial electrical, Solar installation"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddSpecialty}
+                    disabled={!newSpecialty.trim()}
+                    className="bg-[#3db2ff] hover:bg-blue-500 disabled:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors flex items-center"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+                
+                {formData.specialties.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.specialties.map((specialty, index) => (
+                      <div key={index} className="bg-[#3db2ff] text-white px-3 py-1 rounded-full text-sm flex items-center space-x-2">
+                        <span>{specialty}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSpecialty(index)}
+                          className="hover:text-red-200 transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Certifications */}
+            <div>
+              <label className="block text-sm font-medium text-[#cbd5e1] mb-3">
+                Certifications & Qualifications
+              </label>
+              <div className="space-y-3">
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={newCertification}
+                    onChange={(e) => setNewCertification(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCertification())}
+                    className="flex-1 px-4 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none"
+                    placeholder="e.g., Licensed Electrician, OSHA Certified, Master Plumber"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCertification}
+                    disabled={!newCertification.trim()}
+                    className="bg-[#00c9a7] hover:bg-teal-500 disabled:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors flex items-center"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+                
+                {formData.certifications.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.certifications.map((certification, index) => (
+                      <div key={index} className="bg-[#00c9a7] text-white px-3 py-1 rounded-full text-sm flex items-center space-x-2">
+                        <span>{certification}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCertification(index)}
+                          className="hover:text-red-200 transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex space-x-4 pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-[#00c9a7] hover:bg-teal-500 disabled:bg-gray-600 text-white py-3 px-4 rounded-md transition-colors flex items-center justify-center"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Details'
                 )}
               </button>
             </div>
