@@ -125,7 +125,7 @@ export default function Footer() {
                 <li>
                   <div className="text-[#cbd5e1] text-sm flex items-start space-x-2">
                     <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <span>123 Service Street<br />Community City, CC 12345</span>
+                    <span>Johannesburg<br />South Africa</span>
                   </div>
                 </li>
               </ul>
