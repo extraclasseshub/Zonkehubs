@@ -429,16 +429,6 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
                   <p className="text-xs text-gray-400">Click anywhere on the map to set your search location</p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  {tempMapLocation && (
-                    <button
-                      type="button"
-                      onClick={handleMapSelect}
-                      className="bg-[#00c9a7] hover:bg-teal-500 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
-                    >
-                      <Check className="h-4 w-4" />
-                      <span>Select This Location</span>
-                    </button>
-                  )}
                   <button
                     type="button"
                     onClick={handleMapCancel}
@@ -525,19 +515,34 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
             
             <div ref={mapContainer} className="h-64 w-full" />
             
-            {/* Map Instructions */}
-            <div className="bg-slate-800 p-3 border-t border-slate-600 text-xs text-[#cbd5e1]">
+            {/* Map Instructions and Select Button */}
+            <div className="bg-slate-800 p-3 border-t border-slate-600">
+              {/* Select Button */}
+              {tempMapLocation && (
+                <div className="mb-3">
+                  <button
+                    type="button"
+                    onClick={handleMapSelect}
+                    className="w-full bg-[#00c9a7] hover:bg-teal-500 text-white px-4 py-3 rounded-md font-medium transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Check className="h-5 w-5" />
+                    <span>Select This Location</span>
+                  </button>
+                </div>
+              )}
+              
+              {/* Instructions */}
               <div className="flex items-start space-x-2">
                 <div className="flex-shrink-0 mt-0.5">
                   <div className="w-4 h-4 rounded-full bg-[#3db2ff] flex items-center justify-center">
                     <span className="text-white text-[10px]">i</span>
                   </div>
                 </div>
-                <div>
+                <div className="text-xs text-[#cbd5e1]">
                   <p>• Click anywhere on the map to place a pin</p>
                   <p>• Drag the pin to adjust the exact location</p>
                   <p>• Use the search box to find specific places</p>
-                  <p>• Click "Select This Location" when done</p>
+                  <p>• Click the green button below when done</p>
                 </div>
               </div>
             </div>
