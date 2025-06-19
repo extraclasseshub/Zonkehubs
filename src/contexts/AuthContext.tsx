@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Profile load timeout')), 8000)
@@ -141,8 +141,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { data: profileData, error: profileError } = await Promise.race([profilePromise, timeoutPromise]) as any;
       
-      if (profileError || !profileData) {
+      if (profileError) {
         console.error('❌ Failed to load profile:', profileError);
+        return;
+      }
+
+      if (!profileData) {
+        console.error('❌ No profile found for user:', userId);
         return;
       }
 
@@ -154,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('service_providers')
           .select('*')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
         const providerTimeoutPromise = new Promise((_, reject) => 
           setTimeout(() => reject(new Error('Provider data load timeout')), 5000)
@@ -621,7 +626,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('profiles')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error || !profile) return undefined;
 
@@ -630,7 +635,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('service_providers')
           .select('*')
           .eq('id', id)
-          .single();
+          .maybeSingle();
 
         if (providerData) {
           return {
@@ -816,7 +821,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         `)
         .eq('user_id', userId)
         .eq('provider_id', providerId)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
         console.log('📊 No existing rating found');
@@ -859,7 +864,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('ratings')
         .select('user_id, provider_id')
         .eq('id', ratingId)
-        .single();
+        .maybeSingle();
 
       if (fetchError || !ratingData) {
         console.error('❌ Error fetching rating for deletion:', fetchError);
