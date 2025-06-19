@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, MapPin, Filter, Loader2, Navigation, X, Target } from 'lucide-react';
 import { SearchFilters } from '../../types';
 import { getCurrentLocation, geocodeAddress, LocationCoordinates } from '../../lib/mapbox';
+import mapboxgl from 'mapbox-gl';
 
 interface LocationSearchBarProps {
   onSearch: (filters: SearchFilters & { userLocation?: LocationCoordinates }) => void;
@@ -13,6 +14,7 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
   const [location, setLocation] = useState('');
   const [radius, setRadius] = useState(25);
   const [showFilters, setShowFilters] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const [userLocation, setUserLocation] = useState<LocationCoordinates | null>(null);
   const [locationSuggestions, setLocationSuggestions] = useState<LocationCoordinates[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -20,8 +22,43 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
   const [locationError, setLocationError] = useState('');
   const locationInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const marker = useRef<mapboxgl.Marker | null>(null);
 
   const radiusOptions = [5, 10, 15, 20, 25, 30, 50];
+
+  // Initialize map when showMap becomes true
+  useEffect(() => {
+    if (showMap && mapContainer.current && !map.current) {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [userLocation?.lng || -74.006, userLocation?.lat || 40.7128], // Default to NYC or user location
+        zoom: 13
+      });
+
+      map.current.addControl(new mapboxgl.NavigationControl());
+
+      // Add click handler to set location
+      map.current.on('click', (e) => {
+        const { lng, lat } = e.lngLat;
+        updateLocationFromCoords(lat, lng);
+      });
+
+      // Set initial marker if location exists
+      if (userLocation) {
+        addMarker(userLocation.lat, userLocation.lng);
+      }
+    }
+
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, [showMap, userLocation]);
 
   // Handle clicking outside suggestions
   useEffect(() => {
@@ -56,6 +93,52 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
     getInitialLocation();
   }, []);
 
+  const addMarker = (lat: number, lng: number) => {
+    if (!map.current) return;
+
+    // Remove existing marker
+    if (marker.current) {
+      marker.current.remove();
+    }
+
+    // Add new marker
+    marker.current = new mapboxgl.Marker({ color: '#3db2ff' })
+      .setLngLat([lng, lat])
+      .addTo(map.current);
+
+    // Center map on marker
+    map.current.flyTo({ center: [lng, lat], zoom: 15 });
+  };
+
+  const updateLocationFromCoords = async (lat: number, lng: number) => {
+    try {
+      // Reverse geocode to get address
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=pk.eyJ1IjoieGFubmlldGVjaHMiLCJhIjoiY21id2RhYmRxMHlhbzJtczAzMmh5a2xjYiJ9.98IDz3AA1B8oEFsH0g2A0Q&types=place,locality,neighborhood,address`
+      );
+      const data = await response.json();
+      
+      const address = data.features?.[0]?.place_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      
+      const newLocation = { address, lat, lng };
+      setLocation(address);
+      setUserLocation(newLocation);
+      setShowSuggestions(false);
+
+      addMarker(lat, lng);
+    } catch (error) {
+      console.error('Error reverse geocoding:', error);
+      const newLocation = { 
+        address: `${lat.toFixed(4)}, ${lng.toFixed(4)}`, 
+        lat, 
+        lng 
+      };
+      setLocation(newLocation.address);
+      setUserLocation(newLocation);
+      addMarker(lat, lng);
+    }
+  };
+
   const handleGetCurrentLocation = async () => {
     setGettingLocation(true);
     setLocationError('');
@@ -65,6 +148,10 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
       setUserLocation(currentLocation);
       setLocation(currentLocation.address || `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`);
       setShowSuggestions(false);
+      
+      if (map.current) {
+        addMarker(currentLocation.lat, currentLocation.lng);
+      }
     } catch (error) {
       setLocationError(error instanceof Error ? error.message : 'Failed to get location');
     } finally {
@@ -106,6 +193,10 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
     setLocation(suggestion.address || `${suggestion.lat.toFixed(4)}, ${suggestion.lng.toFixed(4)}`);
     setUserLocation(suggestion);
     setShowSuggestions(false);
+    
+    if (map.current) {
+      addMarker(suggestion.lat, suggestion.lng);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -125,6 +216,9 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
     setUserLocation(null);
     setShowSuggestions(false);
     setLocationError('');
+    if (marker.current) {
+      marker.current.remove();
+    }
   };
 
   return (
@@ -165,7 +259,7 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
                 onChange={handleLocationChange}
                 onFocus={() => location.length >= 3 && setShowSuggestions(true)}
                 disabled={loading || gettingLocation}
-                className="w-full pl-10 pr-20 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full pl-10 pr-24 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="Enter location or use current"
               />
               
@@ -194,6 +288,15 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
                   ) : (
                     <Target className="h-4 w-4" />
                   )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMap(!showMap)}
+                  disabled={loading}
+                  className="p-1 text-[#00c9a7] hover:text-teal-400 transition-colors disabled:opacity-50"
+                  title="Use map to select location"
+                >
+                  <Navigation className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -239,6 +342,25 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
             )}
           </div>
         </div>
+
+        {/* Map */}
+        {showMap && (
+          <div className="border border-slate-600 rounded-lg overflow-hidden">
+            <div className="bg-slate-700 px-4 py-2 border-b border-slate-600">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-[#cbd5e1]">Click on the map to set your search location</p>
+                <button
+                  type="button"
+                  onClick={() => setShowMap(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div ref={mapContainer} className="h-64 w-full" />
+          </div>
+        )}
 
         {/* Filters Toggle */}
         <div className="flex items-center justify-between">

@@ -87,6 +87,8 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
               rating: Number(item.rating) || 0,
               reviewCount: Number(item.review_count) || 0,
               totalRatingPoints: Number(item.total_rating_points) || 0,
+              availability: item.availability || undefined,
+              currentStatus: item.current_status || 'available',
             };
             
             console.log('✅ Processed provider:', {
@@ -112,6 +114,7 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
         // First, get providers with actual ratings (rating > 0 AND reviewCount > 0)
         const providersWithRatings = allProviders.filter(provider => {
           const hasValidRatings = provider.rating > 0 && provider.reviewCount > 0;
+          console.log(`🏆 Provider ${provider.name}: rating=${provider.rating}, reviewCount=${provider.reviewCount}, hasValidRatings=${hasValidRatings}`);
           return hasValidRatings;
         });
 
@@ -133,6 +136,13 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
           });
 
           topProviders = sortedByRating.slice(0, 6);
+          
+          console.log('🏆 Top rated providers selected:', topProviders.map(p => ({
+            name: p.name,
+            rating: p.rating,
+            reviewCount: p.reviewCount,
+            totalRatingPoints: p.totalRatingPoints
+          })));
         }
 
         // If we don't have enough rated providers, fill with newest providers
