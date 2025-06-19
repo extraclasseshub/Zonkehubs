@@ -293,45 +293,119 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // TODO: Implement file upload to storage and send file message
-      console.log('File selected for upload:', file.name);
-      alert('File upload feature coming soon!');
+      // Validate file size (max 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        'application/pdf', 'text/plain',
+        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      
+      if (!allowedTypes.includes(file.type)) {
+        alert('File type not supported. Please upload images, PDFs, or documents.');
+        return;
+      }
+
+      try {
+        // For now, we'll convert to base64 and store in message content
+        // In production, you'd upload to Supabase Storage
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const base64Data = event.target?.result as string;
+          
+          if (selectedConversation && user) {
+            setSendingMessage(true);
+            try {
+              // Create file message
+              const fileMessage = {
+                type: file.type.startsWith('image/') ? 'image' : 'file',
+                name: file.name,
+                size: file.size,
+                data: base64Data
+              };
+              
+              await sendMessage(selectedConversation.participant.id, JSON.stringify(fileMessage));
+              
+              // Clear file input
+              if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+              }
+              
+              // Refresh conversation
+              setTimeout(refreshConversations, 200);
+            } catch (error) {
+              console.error('Failed to send file:', error);
+              alert('Failed to send file. Please try again.');
+            } finally {
+              setSendingMessage(false);
+            }
+          }
+        };
+        
+        reader.onerror = () => {
+          alert('Failed to read file. Please try again.');
+        };
+        
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Error processing file:', error);
+        alert('Failed to process file. Please try again.');
+      }
     }
   };
 
   const formatTime = (date: Date) => {
     const now = new Date();
     const messageDate = new Date(date);
-    const diffInHours = (now.getTime() - messageDate.getTime()) / (1000 * 60 * 60);
+    const diffInMinutes = (now.getTime() - messageDate.getTime()) / (1000 * 60);
+    const diffInHours = diffInMinutes / 60;
+    const diffInDays = diffInHours / 24;
 
-    if (diffInHours < 1) {
-      const diffInMinutes = Math.floor(diffInHours * 60);
-      return diffInMinutes < 1 ? 'Just now' : `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1) {
+      return 'Just now';
+    } else if (diffInMinutes < 60) {
+      return `${Math.floor(diffInMinutes)}m ago`;
     } else if (diffInHours < 24) {
       return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (diffInHours < 168) {
-      return messageDate.toLocaleDateString([], { weekday: 'short' });
+    } else if (diffInDays < 7) {
+      return messageDate.toLocaleDateString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
     } else {
-      return messageDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      return messageDate.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
   };
 
   const formatMessageDate = (date: Date) => {
     const now = new Date();
     const messageDate = new Date(date);
-    const diffInDays = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60 * 60 * 24));
+    const diffInMinutes = (now.getTime() - messageDate.getTime()) / (1000 * 60);
+    const diffInHours = diffInMinutes / 60;
+    const diffInDays = diffInHours / 24;
 
-    if (diffInDays === 0) {
-      return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (diffInDays === 1) {
-      return `Yesterday ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    if (diffInMinutes < 1) {
+      return 'Just now';
+    } else if (diffInMinutes < 60) {
+      return `${Math.floor(diffInMinutes)} minutes ago`;
+    } else if (diffInHours < 24) {
+      if (diffInHours < 1) {
+        return `${Math.floor(diffInMinutes)} minutes ago`;
+      } else {
+        return `Today at ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      }
+    } else if (diffInDays < 2) {
+      return `Yesterday at ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     } else if (diffInDays < 7) {
-      return `${messageDate.toLocaleDateString([], { weekday: 'long' })} ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return `${messageDate.toLocaleDateString([], { weekday: 'long' })} at ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     } else {
-      return `${messageDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return `${messageDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} at ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     }
   };
 
@@ -618,7 +692,54 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
                               : 'bg-white text-slate-800 rounded-bl-md'
                           }`}
                         >
-                          <p className="text-sm leading-relaxed break-words">{message.content}</p>
+                          {/* Render message content based on type */}
+                          {(() => {
+                            try {
+                              const fileData = JSON.parse(message.content);
+                              if (fileData.type && fileData.name && fileData.data) {
+                                // This is a file message
+                                if (fileData.type === 'image') {
+                                  return (
+                                    <div className="space-y-2">
+                                      <img 
+                                        src={fileData.data} 
+                                        alt={fileData.name}
+                                        className="max-w-xs rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                        onClick={() => window.open(fileData.data, '_blank')}
+                                      />
+                                      <p className="text-xs opacity-75">{fileData.name}</p>
+                                    </div>
+                                  );
+                                } else {
+                                  return (
+                                    <div className="flex items-center space-x-2 p-2 bg-black/10 rounded-lg">
+                                      <Paperclip className="h-4 w-4" />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium truncate">{fileData.name}</p>
+                                        <p className="text-xs opacity-75">
+                                          {(fileData.size / 1024 / 1024).toFixed(2)} MB
+                                        </p>
+                                      </div>
+                                      <button
+                                        onClick={() => {
+                                          const link = document.createElement('a');
+                                          link.href = fileData.data;
+                                          link.download = fileData.name;
+                                          link.click();
+                                        }}
+                                        className="p-1 hover:bg-black/10 rounded transition-colors"
+                                      >
+                                        <Download className="h-4 w-4" />
+                                      </button>
+                                    </div>
+                                  );
+                                }
+                              }
+                            } catch {
+                              // Not a file message, render as regular text
+                            }
+                            return <p className="text-sm leading-relaxed break-words">{message.content}</p>;
+                          })()}
                           
                           {/* Message Actions */}
                           {message.senderId === user?.id && (
@@ -662,12 +783,9 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
                         <div className={`flex items-center space-x-1 mt-1 px-2 ${
                           message.senderId === user?.id ? 'justify-end' : 'justify-start'
                         }`}>
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="h-3 w-3 text-gray-400" />
-                            <span className="text-xs text-gray-400">
-                              {formatMessageDate(message.timestamp)}
-                            </span>
-                          </div>
+                          <span className="text-xs text-gray-400">
+                            {formatMessageDate(message.timestamp)}
+                          </span>
                           {message.senderId === user?.id && (
                             <div className="ml-1">
                               {getMessageStatus(message)}
@@ -734,7 +852,7 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
                   ref={fileInputRef}
                   type="file"
                   className="hidden"
-                  accept="image/*,application/pdf,.doc,.docx"
+                  accept="image/*,application/pdf,text/plain,.doc,.docx"
                   onChange={handleFileUpload}
                 />
               </form>
