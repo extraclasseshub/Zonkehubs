@@ -579,7 +579,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (!isSupabaseConfigured() || !supabase || !user) return [];
 
-      // Use the new database function for proper message filtering
+      // Use the enhanced database function for proper message filtering
       const { data, error } = await supabase.rpc('get_conversation_messages', {
         user1_id: userId1,
         user2_id: userId2
@@ -633,17 +633,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (!isSupabaseConfigured() || !supabase) return false;
 
-      // Call the database function to delete conversation for current user
-      const { error } = await supabase.rpc('delete_conversation_for_user', {
-        target_user_id: user.id,
-        other_user_id: otherUserId
-      });
+      console.log('🗑️ Deleting conversation with user:', otherUserId);
+
+      // Mark all messages in this conversation as deleted for current user
+      const { error } = await supabase
+        .from('chat_messages')
+        .update({
+          deleted_for_sender: true
+        })
+        .eq('sender_id', user.id)
+        .eq('receiver_id', otherUserId);
 
       if (error) {
-        console.error('Error deleting conversation:', error);
-        return false;
+        console.error('Error deleting sent messages:', error);
       }
 
+      // Mark all received messages as deleted for current user
+      const { error: error2 } = await supabase
+        .from('chat_messages')
+        .update({
+          deleted_for_receiver: true
+        })
+        .eq('sender_id', otherUserId)
+        .eq('receiver_id', user.id);
+
+      if (error2) {
+        console.error('Error deleting received messages:', error2);
+      }
+
+      // Clean up any fully deleted messages
+      await supabase.rpc('cleanup_fully_deleted_messages');
+
+      console.log('✅ Conversation deleted successfully');
       return true;
     } catch (error) {
       console.error('Error deleting conversation:', error);
@@ -657,28 +678,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (!isSupabaseConfigured() || !supabase) return false;
 
+      console.log('🗑️ Deleting message:', messageId, 'Type:', deleteType);
+
+      // Get the message first to check ownership
+      const { data: message, error: fetchError } = await supabase
+        .from('chat_messages')
+        .select('sender_id, receiver_id')
+        .eq('id', messageId)
+        .single();
+
+      if (fetchError || !message) {
+        console.error('Error fetching message:', fetchError);
+        return false;
+      }
+
       if (deleteType === 'delete-for-all') {
-        // Mark message as deleted for all
+        // Only sender can delete for all
+        if (message.sender_id !== user.id) {
+          console.error('Only sender can delete message for all');
+          return false;
+        }
+
         const { error } = await supabase
           .from('chat_messages')
           .update({ deleted_for_all: true })
           .eq('id', messageId)
-          .eq('sender_id', user.id); // Only sender can delete for all
+          .eq('sender_id', user.id);
 
         if (error) {
           console.error('Error deleting message for all:', error);
           return false;
         }
       } else {
-        // Mark message as deleted for current user
-        const { data: message } = await supabase
-          .from('chat_messages')
-          .select('sender_id, receiver_id')
-          .eq('id', messageId)
-          .single();
-
-        if (!message) return false;
-
+        // Delete for current user only
         const updateField = message.sender_id === user.id ? 'deleted_for_sender' : 'deleted_for_receiver';
         
         const { error } = await supabase
@@ -692,6 +724,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      console.log('✅ Message deletion successful');
       return true;
     } catch (error) {
       console.error('Error deleting message:', error);

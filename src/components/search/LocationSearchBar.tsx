@@ -124,6 +124,9 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
       setLocation(address);
       setUserLocation(newLocation);
       setShowSuggestions(false);
+      
+      // Auto-hide map after location selection
+      setShowMap(false);
 
       addMarker(lat, lng);
     } catch (error) {
@@ -135,6 +138,10 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
       };
       setLocation(newLocation.address);
       setUserLocation(newLocation);
+      
+      // Auto-hide map after location selection
+      setShowMap(false);
+      
       addMarker(lat, lng);
     }
   };

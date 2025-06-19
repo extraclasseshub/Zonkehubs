@@ -129,6 +129,9 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
         location: { address, lat, lng }
       }));
 
+      // Auto-hide map after location selection
+      setShowMap(false);
+
       addMarker(lat, lng);
     } catch (error) {
       console.error('Error reverse geocoding:', error);
@@ -140,6 +143,10 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
           lng 
         }
       }));
+      
+      // Auto-hide map after location selection
+      setShowMap(false);
+      
       addMarker(lat, lng);
     }
   };
