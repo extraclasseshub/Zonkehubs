@@ -50,6 +50,9 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [newSpecialty, setNewSpecialty] = useState('');
   const [newCertification, setNewCertification] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
@@ -356,25 +359,61 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
       ...prev,
       availability
     }));
+    
+    // Auto-save availability when it's updated
+    try {
+      setSubmitError(null);
+      const submissionData = {
+        ...formData,
+        availability,
+        socialMedia: Object.fromEntries(
+          Object.entries(formData.socialMedia).filter(([_, value]) => value && value.trim() !== '')
+        ),
+        specialties: formData.specialties.filter(s => s.trim() !== ''),
+        certifications: formData.certifications.filter(c => c.trim() !== ''),
+      };
+      
+      console.log('💾 Auto-saving availability with form data:', submissionData);
+      await onSubmit(submissionData);
+      
+      console.log('✅ Availability auto-saved successfully');
+    } catch (error) {
+      console.error('❌ Error auto-saving availability:', error);
+      setSubmitError('Failed to save availability. Please try again.');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Clean up social media data - remove empty fields
-    const cleanedSocialMedia = Object.fromEntries(
-      Object.entries(formData.socialMedia).filter(([_, value]) => value && value.trim() !== '')
-    );
+    setSubmitting(true);
+    setSubmitError(null);
+    setSubmitSuccess(false);
     
-    const submissionData = {
-      ...formData,
-      socialMedia: cleanedSocialMedia,
-      specialties: formData.specialties.filter(s => s.trim() !== ''),
-      certifications: formData.certifications.filter(c => c.trim() !== ''),
-    };
-    
-    console.log('📝 Submitting form data:', submissionData);
-    await onSubmit(submissionData);
+    try {
+      // Clean up social media data - remove empty fields
+      const cleanedSocialMedia = Object.fromEntries(
+        Object.entries(formData.socialMedia).filter(([_, value]) => value && value.trim() !== '')
+      );
+      
+      const submissionData = {
+        ...formData,
+        socialMedia: cleanedSocialMedia,
+        specialties: formData.specialties.filter(s => s.trim() !== ''),
+        certifications: formData.certifications.filter(c => c.trim() !== ''),
+      };
+      
+      console.log('📝 Submitting form data:', submissionData);
+      await onSubmit(submissionData);
+      
+      setSubmitSuccess(true);
+      setTimeout(() => setSubmitSuccess(false), 3000);
+    } catch (error) {
+      console.error('❌ Form submission error:', error);
+      setSubmitError(error instanceof Error ? error.message : 'Failed to save profile. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -383,6 +422,21 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
         <h2 className="text-2xl font-bold text-white mb-6">
           {initialData?.serviceType ? 'Edit Profile' : 'Complete Your Profile'}
         </h2>
+
+        {/* Success/Error Messages */}
+        {submitSuccess && (
+          <div className="mb-6 flex items-center space-x-2 text-green-400 text-sm bg-green-900/20 border border-green-600 rounded-md p-3">
+            <Upload className="h-4 w-4 flex-shrink-0" />
+            <span>Profile saved successfully!</span>
+          </div>
+        )}
+
+        {submitError && (
+          <div className="mb-6 flex items-center space-x-2 text-red-400 text-sm bg-red-900/20 border border-red-600 rounded-md p-3">
+            <X className="h-4 w-4 flex-shrink-0" />
+            <span>{submitError}</span>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="mb-8">
@@ -815,10 +869,10 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
             <div className="flex space-x-4 pt-4">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={submitting || loading}
                 className="flex-1 bg-[#00c9a7] hover:bg-teal-500 disabled:bg-gray-600 text-white py-3 px-4 rounded-md transition-colors flex items-center justify-center"
               >
-                {loading ? (
+                {submitting || loading ? (
                   <>
                     <Loader2 className="animate-spin h-4 w-4 mr-2" />
                     Saving...
@@ -966,10 +1020,10 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
             <div className="flex space-x-4 pt-4">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={submitting || loading}
                 className="flex-1 bg-[#00c9a7] hover:bg-teal-500 disabled:bg-gray-600 text-white py-3 px-4 rounded-md transition-colors flex items-center justify-center"
               >
-                {loading ? (
+                {submitting || loading ? (
                   <>
                     <Loader2 className="animate-spin h-4 w-4 mr-2" />
                     Saving...
@@ -985,16 +1039,16 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
             <ProviderAvailability
               initialAvailability={formData.availability}
               onSave={handleAvailabilitySave}
-              loading={loading}
+              loading={submitting || loading}
             />
             
             <div className="flex space-x-4 pt-4">
               <button
                 onClick={() => onSubmit(formData)}
-                disabled={loading}
+                disabled={submitting || loading}
                 className="flex-1 bg-[#00c9a7] hover:bg-teal-500 disabled:bg-gray-600 text-white py-3 px-4 rounded-md transition-colors flex items-center justify-center"
               >
-                {loading ? (
+                {submitting || loading ? (
                   <>
                     <Loader2 className="animate-spin h-4 w-4 mr-2" />
                     Saving...
