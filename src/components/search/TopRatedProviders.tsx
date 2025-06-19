@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ServiceProvider } from '../../types';
-import { Star, MapPin, User, Building, Crown, Award, Loader2 } from 'lucide-react';
+import { Star, MapPin, User, Building, Crown, Award, Loader2, Globe, Clock } from 'lucide-react';
 import RatingDisplay from '../rating/RatingDisplay';
 import { supabase } from '../../lib/supabase';
 
@@ -15,9 +15,9 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
   useEffect(() => {
     const loadTopProviders = async () => {
       try {
-        console.log('🏆 Loading top rated providers...');
+        console.log('🏆 Loading top rated providers with all fields...');
         
-        // Get ALL published providers with complete profile data
+        // Get ALL published providers with complete profile data including new fields
         const { data, error } = await supabase
           .from('service_providers')
           .select(`
@@ -46,7 +46,7 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
           return;
         }
 
-        // Convert all providers with explicit type conversion
+        // Convert all providers with explicit type conversion including all new fields
         const allProviders: ServiceProvider[] = [];
         
         for (const item of data) {
@@ -76,6 +76,11 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
               serviceType: item.service_type,
               description: item.description,
               phone: item.phone || undefined,
+              website: item.website || undefined,
+              socialMedia: item.social_media || {},
+              specialties: item.specialties || [],
+              yearsExperience: item.years_experience || 0,
+              certifications: item.certifications || [],
               location: {
                 address: item.address,
                 lat: Number(item.latitude) || 0,
@@ -91,12 +96,14 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
               currentStatus: item.current_status || 'available',
             };
             
-            console.log('✅ Processed provider:', {
+            console.log('✅ Processed provider with all fields:', {
               name: provider.name,
               rating: provider.rating,
               reviewCount: provider.reviewCount,
-              isPublished: provider.isPublished,
-              hasValidData: !!(provider.serviceType && provider.description && provider.location.address)
+              website: provider.website,
+              specialties: provider.specialties,
+              availability: provider.availability,
+              currentStatus: provider.currentStatus
             });
             
             allProviders.push(provider);
@@ -106,7 +113,7 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
           }
         }
 
-        console.log('🏆 All converted providers:', allProviders.length);
+        console.log('🏆 All converted providers with full data:', allProviders.length);
 
         // For top rated section, prioritize providers with ratings, but also show new providers
         let topProviders: ServiceProvider[] = [];
@@ -162,14 +169,15 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
           console.log('🏆 Added newest providers to fill slots:', newestProviders.length);
         }
 
-        console.log('🏆 Final top providers:', topProviders.length);
+        console.log('🏆 Final top providers with all data:', topProviders.length);
         console.log('🏆 Top providers details:', topProviders.map(p => ({
           name: p.name,
           rating: p.rating,
           reviewCount: p.reviewCount,
-          totalRatingPoints: p.totalRatingPoints,
-          createdAt: p.createdAt,
-          hasProfileImage: !!p.profileImage
+          website: p.website,
+          specialties: p.specialties,
+          availability: p.availability,
+          currentStatus: p.currentStatus
         })));
         
         setTopProviders(topProviders);
@@ -188,6 +196,25 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
     
     return () => clearInterval(interval);
   }, []);
+
+  // Helper function to get availability status
+  const getAvailabilityStatus = (provider: ServiceProvider) => {
+    if (!provider.availability || Object.keys(provider.availability).length === 0) {
+      return null;
+    }
+
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'lowercase' });
+    const todaySchedule = provider.availability[today as keyof typeof provider.availability];
+    
+    if (todaySchedule?.available) {
+      return { 
+        status: `Open ${todaySchedule.start}-${todaySchedule.end}`, 
+        color: 'text-green-400' 
+      };
+    } else {
+      return { status: 'Closed today', color: 'text-red-400' };
+    }
+  };
 
   if (loading) {
     return (
@@ -239,137 +266,187 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
 
       {/* Top Providers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {topProviders.map((provider, index) => (
-          <div
-            key={provider.id}
-            className="bg-slate-800 rounded-lg p-6 hover:bg-slate-700 transition-all duration-300 cursor-pointer transform hover:scale-105 relative overflow-hidden"
-            onClick={() => onProviderClick(provider)}
-          >
-            {/* Badge for top rated or new */}
-            <div className="absolute top-4 right-4">
-              <div className={`rounded-full p-2 ${
-                provider.rating > 0 && provider.reviewCount > 0
-                  ? index === 0 
-                    ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' 
-                    : index === 1 
-                    ? 'bg-gradient-to-r from-gray-300 to-gray-500'
-                    : index === 2
-                    ? 'bg-gradient-to-r from-orange-400 to-orange-600'
-                    : 'bg-gradient-to-r from-[#3db2ff] to-[#00c9a7]'
-                  : 'bg-gradient-to-r from-green-400 to-green-600'
-              }`}>
-                {provider.rating > 0 && provider.reviewCount > 0 ? (
-                  index < 3 ? (
-                    <Award className="h-4 w-4 text-white" />
+        {topProviders.map((provider, index) => {
+          const availabilityStatus = getAvailabilityStatus(provider);
+          
+          return (
+            <div
+              key={provider.id}
+              className="bg-slate-800 rounded-lg p-6 hover:bg-slate-700 transition-all duration-300 cursor-pointer transform hover:scale-105 relative overflow-hidden"
+              onClick={() => onProviderClick(provider)}
+            >
+              {/* Badge for top rated or new */}
+              <div className="absolute top-4 right-4">
+                <div className={`rounded-full p-2 ${
+                  provider.rating > 0 && provider.reviewCount > 0
+                    ? index === 0 
+                      ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' 
+                      : index === 1 
+                      ? 'bg-gradient-to-r from-gray-300 to-gray-500'
+                      : index === 2
+                      ? 'bg-gradient-to-r from-orange-400 to-orange-600'
+                      : 'bg-gradient-to-r from-[#3db2ff] to-[#00c9a7]'
+                    : 'bg-gradient-to-r from-green-400 to-green-600'
+                }`}>
+                  {provider.rating > 0 && provider.reviewCount > 0 ? (
+                    index < 3 ? (
+                      <Award className="h-4 w-4 text-white" />
+                    ) : (
+                      <Star className="h-4 w-4 text-white fill-current" />
+                    )
                   ) : (
-                    <Star className="h-4 w-4 text-white fill-current" />
-                  )
+                    <span className="text-white text-xs font-bold">NEW</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Provider Info */}
+              <div className="flex items-start space-x-4 mb-4">
+                {provider.profileImage ? (
+                  <img
+                    src={provider.profileImage}
+                    alt={provider.businessName || provider.name}
+                    className="w-16 h-16 rounded-full object-cover border-3 border-gradient-to-r from-yellow-400 to-orange-500"
+                  />
                 ) : (
-                  <span className="text-white text-xs font-bold">NEW</span>
+                  <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center border-3 border-slate-600">
+                    <User className="h-8 w-8 text-gray-400" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-white mb-1">
+                    {provider.businessName || provider.name}
+                  </h3>
+                  <div className="flex items-center space-x-2 text-sm text-[#cbd5e1] mb-2">
+                    {provider.businessType === 'business' ? (
+                      <Building className="h-4 w-4" />
+                    ) : (
+                      <User className="h-4 w-4" />
+                    )}
+                    <span className="capitalize">{provider.businessType}</span>
+                    {provider.yearsExperience && provider.yearsExperience > 0 && (
+                      <>
+                        <span>•</span>
+                        <span>{provider.yearsExperience}y exp</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    <span className="inline-block bg-[#3db2ff] text-white px-2 py-1 rounded-full text-xs font-medium">
+                      {provider.serviceType}
+                    </span>
+                    {provider.specialties && provider.specialties.length > 0 && (
+                      <span className="inline-block bg-slate-600 text-white px-2 py-1 rounded-full text-xs">
+                        +{provider.specialties.length} specialties
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Rating or New Badge */}
+              <div className="mb-4">
+                {provider.rating > 0 && provider.reviewCount > 0 ? (
+                  <RatingDisplay 
+                    rating={provider.rating} 
+                    reviewCount={provider.reviewCount} 
+                    size="lg"
+                  />
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                      New Provider
+                    </div>
+                    <span className="text-sm text-[#cbd5e1]">No reviews yet</span>
+                  </div>
                 )}
               </div>
-            </div>
 
-            {/* Provider Info */}
-            <div className="flex items-start space-x-4 mb-4">
-              {provider.profileImage ? (
-                <img
-                  src={provider.profileImage}
-                  alt={provider.businessName || provider.name}
-                  className="w-16 h-16 rounded-full object-cover border-3 border-gradient-to-r from-yellow-400 to-orange-500"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center border-3 border-slate-600">
-                  <User className="h-8 w-8 text-gray-400" />
-                </div>
-              )}
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-white mb-1">
-                  {provider.businessName || provider.name}
-                </h3>
-                <div className="flex items-center space-x-2 text-sm text-[#cbd5e1] mb-2">
-                  {provider.businessType === 'business' ? (
-                    <Building className="h-4 w-4" />
-                  ) : (
-                    <User className="h-4 w-4" />
-                  )}
-                  <span className="capitalize">{provider.businessType}</span>
-                </div>
-                <span className="inline-block bg-[#3db2ff] text-white px-3 py-1 rounded-full text-sm font-medium">
-                  {provider.serviceType}
-                </span>
-              </div>
-            </div>
+              {/* Description */}
+              <p className="text-[#cbd5e1] text-sm mb-4 line-clamp-2">
+                {provider.description}
+              </p>
 
-            {/* Rating or New Badge */}
-            <div className="mb-4">
-              {provider.rating > 0 && provider.reviewCount > 0 ? (
-                <RatingDisplay 
-                  rating={provider.rating} 
-                  reviewCount={provider.reviewCount} 
-                  size="lg"
-                />
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                    New Provider
+              {/* Additional Info */}
+              <div className="space-y-2 mb-4">
+                {/* Website */}
+                {provider.website && (
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Globe className="h-4 w-4 text-[#3db2ff]" />
+                    <span className="text-[#3db2ff] truncate">{provider.website}</span>
                   </div>
-                  <span className="text-sm text-[#cbd5e1]">No reviews yet</span>
+                )}
+
+                {/* Availability Status */}
+                {availabilityStatus && (
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Clock className="h-4 w-4 text-gray-400" />
+                    <span className={availabilityStatus.color}>{availabilityStatus.status}</span>
+                  </div>
+                )}
+
+                {/* Current Status */}
+                {provider.currentStatus && (
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-2 h-2 rounded-full ${
+                      provider.currentStatus === 'available' 
+                        ? 'bg-green-400' 
+                        : provider.currentStatus === 'busy'
+                        ? 'bg-yellow-400'
+                        : 'bg-gray-400'
+                    }`}></div>
+                    <span className="text-sm text-[#cbd5e1] capitalize">{provider.currentStatus}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Location */}
+              <div className="flex items-center space-x-2 text-sm text-[#cbd5e1]">
+                <MapPin className="h-4 w-4" />
+                <span>{provider.location.address}</span>
+                <span>• {provider.workRadius}km radius</span>
+              </div>
+
+              {/* Portfolio Preview */}
+              {provider.workPortfolio && provider.workPortfolio.length > 0 && (
+                <div className="mt-4">
+                  <div className="flex space-x-2 overflow-x-auto">
+                    {provider.workPortfolio.slice(0, 3).map((image, imgIndex) => (
+                      <img
+                        key={imgIndex}
+                        src={image}
+                        alt={`Work ${imgIndex + 1}`}
+                        className="w-12 h-12 object-cover rounded-md flex-shrink-0"
+                      />
+                    ))}
+                    {provider.workPortfolio.length > 3 && (
+                      <div className="w-12 h-12 bg-slate-700 rounded-md flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs text-[#cbd5e1]">+{provider.workPortfolio.length - 3}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
-            </div>
 
-            {/* Description */}
-            <p className="text-[#cbd5e1] text-sm mb-4 line-clamp-2">
-              {provider.description}
-            </p>
-
-            {/* Location */}
-            <div className="flex items-center space-x-2 text-sm text-[#cbd5e1]">
-              <MapPin className="h-4 w-4" />
-              <span>{provider.location.address}</span>
-              <span>• {provider.workRadius}km radius</span>
-            </div>
-
-            {/* Portfolio Preview */}
-            {provider.workPortfolio && provider.workPortfolio.length > 0 && (
-              <div className="mt-4">
-                <div className="flex space-x-2 overflow-x-auto">
-                  {provider.workPortfolio.slice(0, 3).map((image, imgIndex) => (
-                    <img
-                      key={imgIndex}
-                      src={image}
-                      alt={`Work ${imgIndex + 1}`}
-                      className="w-12 h-12 object-cover rounded-md flex-shrink-0"
-                    />
-                  ))}
-                  {provider.workPortfolio.length > 3 && (
-                    <div className="w-12 h-12 bg-slate-700 rounded-md flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs text-[#cbd5e1]">+{provider.workPortfolio.length - 3}</span>
-                    </div>
-                  )}
+              {/* Position Indicator */}
+              <div className="absolute bottom-4 right-4">
+                <div className={`text-xs font-bold px-2 py-1 rounded-full ${
+                  provider.rating > 0 && provider.reviewCount > 0
+                    ? index === 0 
+                      ? 'bg-yellow-500 text-white' 
+                      : index === 1 
+                      ? 'bg-gray-400 text-white'
+                      : index === 2
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-[#3db2ff] text-white'
+                    : 'bg-green-500 text-white'
+                }`}>
+                  {provider.rating > 0 && provider.reviewCount > 0 ? `#${index + 1}` : 'NEW'}
                 </div>
               </div>
-            )}
-
-            {/* Position Indicator */}
-            <div className="absolute bottom-4 right-4">
-              <div className={`text-xs font-bold px-2 py-1 rounded-full ${
-                provider.rating > 0 && provider.reviewCount > 0
-                  ? index === 0 
-                    ? 'bg-yellow-500 text-white' 
-                    : index === 1 
-                    ? 'bg-gray-400 text-white'
-                    : index === 2
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-[#3db2ff] text-white'
-                  : 'bg-green-500 text-white'
-              }`}>
-                {provider.rating > 0 && provider.reviewCount > 0 ? `#${index + 1}` : 'NEW'}
-              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* View All Link */}

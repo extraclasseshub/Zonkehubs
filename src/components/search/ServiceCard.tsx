@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ServiceProvider } from '../../types';
-import { MapPin, Phone, Mail, Star, User, Building, MessageCircle, Eye } from 'lucide-react';
+import { MapPin, Phone, Mail, Star, User, Building, MessageCircle, Eye, Globe, Clock, Award, Calendar } from 'lucide-react';
 import ChatModal from '../chat/ChatModal';
 import ProviderModal from './ProviderModal';
 import RatingDisplay from '../rating/RatingDisplay';
@@ -14,14 +14,19 @@ export default function ServiceCard({ provider, onChatStart }: ServiceCardProps)
   const [showChat, setShowChat] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
-  // Debug log to see what rating data this card receives
+  // Debug log to see what data this card receives
   useEffect(() => {
-    console.log('🃏 ServiceCard received provider:', {
+    console.log('🃏 ServiceCard received provider with all data:', {
       name: provider.name,
       rating: provider.rating,
       reviewCount: provider.reviewCount,
-      totalRatingPoints: provider.totalRatingPoints,
-      isPublished: provider.isPublished
+      website: provider.website,
+      socialMedia: provider.socialMedia,
+      specialties: provider.specialties,
+      yearsExperience: provider.yearsExperience,
+      certifications: provider.certifications,
+      availability: provider.availability,
+      currentStatus: provider.currentStatus
     });
   }, [provider]);
 
@@ -52,6 +57,27 @@ export default function ServiceCard({ provider, onChatStart }: ServiceCardProps)
     }
   };
 
+  // Helper function to get availability status
+  const getAvailabilityStatus = () => {
+    if (!provider.availability || Object.keys(provider.availability).length === 0) {
+      return { status: 'Not set', color: 'text-gray-400' };
+    }
+
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'lowercase' });
+    const todaySchedule = provider.availability[today as keyof typeof provider.availability];
+    
+    if (todaySchedule?.available) {
+      return { 
+        status: `Open today ${todaySchedule.start} - ${todaySchedule.end}`, 
+        color: 'text-green-400' 
+      };
+    } else {
+      return { status: 'Closed today', color: 'text-red-400' };
+    }
+  };
+
+  const availabilityStatus = getAvailabilityStatus();
+
   return (
     <>
       <div className="bg-slate-800 rounded-lg p-6 hover:bg-slate-700 transition-colors border border-slate-700">
@@ -80,23 +106,59 @@ export default function ServiceCard({ provider, onChatStart }: ServiceCardProps)
                   <User className="h-4 w-4" />
                 )}
                 <span className="capitalize">{provider.businessType}</span>
+                {provider.yearsExperience && provider.yearsExperience > 0 && (
+                  <>
+                    <span>•</span>
+                    <span>{provider.yearsExperience} years exp.</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
           
-          {/* New Provider Badge */}
-          {(!provider.rating || provider.rating === 0) && (!provider.reviewCount || provider.reviewCount === 0) && (
-            <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-              New
-            </div>
-          )}
+          {/* Status Badges */}
+          <div className="flex flex-col items-end space-y-1">
+            {/* Current Status */}
+            {provider.currentStatus && (
+              <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                provider.currentStatus === 'available' 
+                  ? 'bg-green-500 text-white' 
+                  : provider.currentStatus === 'busy'
+                  ? 'bg-yellow-500 text-white'
+                  : 'bg-gray-500 text-white'
+              }`}>
+                {provider.currentStatus}
+              </div>
+            )}
+            
+            {/* New Provider Badge */}
+            {(!provider.rating || provider.rating === 0) && (!provider.reviewCount || provider.reviewCount === 0) && (
+              <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                New
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Service Type */}
+        {/* Service Type and Specialties */}
         <div className="mb-3">
-          <span className="inline-block bg-[#3db2ff] text-white px-3 py-1 rounded-full text-sm font-medium">
-            {provider.serviceType}
-          </span>
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-block bg-[#3db2ff] text-white px-3 py-1 rounded-full text-sm font-medium">
+              {provider.serviceType}
+            </span>
+            {provider.specialties && provider.specialties.length > 0 && (
+              provider.specialties.slice(0, 2).map((specialty, index) => (
+                <span key={index} className="inline-block bg-slate-600 text-white px-2 py-1 rounded-full text-xs">
+                  {specialty}
+                </span>
+              ))
+            )}
+            {provider.specialties && provider.specialties.length > 2 && (
+              <span className="inline-block bg-slate-600 text-white px-2 py-1 rounded-full text-xs">
+                +{provider.specialties.length - 2} more
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Rating Display */}
@@ -112,6 +174,54 @@ export default function ServiceCard({ provider, onChatStart }: ServiceCardProps)
         <p className="text-[#cbd5e1] text-sm mb-4 line-clamp-3">
           {provider.description}
         </p>
+
+        {/* Availability Status */}
+        {provider.availability && Object.keys(provider.availability).length > 0 && (
+          <div className="mb-3 flex items-center space-x-2">
+            <Clock className="h-4 w-4 text-gray-400" />
+            <span className={`text-sm ${availabilityStatus.color}`}>
+              {availabilityStatus.status}
+            </span>
+          </div>
+        )}
+
+        {/* Website Link */}
+        {provider.website && (
+          <div className="mb-3 flex items-center space-x-2">
+            <Globe className="h-4 w-4 text-gray-400" />
+            <a 
+              href={provider.website.startsWith('http') ? provider.website : `https://${provider.website}`}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[#3db2ff] hover:text-blue-400 text-sm truncate"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {provider.website}
+            </a>
+          </div>
+        )}
+
+        {/* Certifications */}
+        {provider.certifications && provider.certifications.length > 0 && (
+          <div className="mb-3">
+            <div className="flex items-center space-x-2 mb-1">
+              <Award className="h-4 w-4 text-gray-400" />
+              <span className="text-xs text-[#cbd5e1]">Certified:</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {provider.certifications.slice(0, 2).map((cert, index) => (
+                <span key={index} className="bg-[#00c9a7] text-white px-2 py-1 rounded-full text-xs">
+                  {cert}
+                </span>
+              ))}
+              {provider.certifications.length > 2 && (
+                <span className="bg-[#00c9a7] text-white px-2 py-1 rounded-full text-xs">
+                  +{provider.certifications.length - 2}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Portfolio Preview */}
         {provider.workPortfolio && provider.workPortfolio.length > 0 && (

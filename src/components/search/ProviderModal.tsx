@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ServiceProvider, Rating } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
-import { X, MapPin, Phone, Mail, Star, User, Building, MessageCircle, Loader2 } from 'lucide-react';
+import { X, MapPin, Phone, Mail, Star, User, Building, MessageCircle, Loader2, Globe, Clock, Award, Calendar, ExternalLink } from 'lucide-react';
 import RatingModal from '../rating/RatingModal';
 import RatingDisplay from '../rating/RatingDisplay';
 import ReviewsList from '../rating/ReviewsList';
@@ -16,7 +16,7 @@ interface ProviderModalProps {
 export default function ProviderModal({ provider: initialProvider, onClose, onStartChat }: ProviderModalProps) {
   const { user, getProviderRatings, getUserRating } = useAuth();
   const [showRatingModal, setShowRatingModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'about' | 'reviews'>('about');
+  const [activeTab, setActiveTab] = useState<'about' | 'reviews' | 'availability'>('about');
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [userRating, setUserRating] = useState<Rating | undefined>();
   const [provider, setProvider] = useState(initialProvider);
@@ -25,11 +25,11 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
   
   const canRate = user && user.role === 'user';
 
-  // Refresh provider data to get latest ratings
+  // Refresh provider data to get latest information including availability
   useEffect(() => {
     const refreshProviderData = async () => {
       try {
-        console.log('🔄 Refreshing provider data for modal...');
+        console.log('🔄 Refreshing provider data for modal with all fields...');
         
         const { data, error } = await supabase
           .from('service_providers')
@@ -55,6 +55,11 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
             serviceType: data.service_type || '',
             description: data.description || '',
             phone: data.phone || undefined,
+            website: data.website || undefined,
+            socialMedia: data.social_media || {},
+            specialties: data.specialties || [],
+            yearsExperience: data.years_experience || 0,
+            certifications: data.certifications || [],
             location: {
               address: data.address || '',
               lat: Number(data.latitude) || 0,
@@ -66,12 +71,19 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
             rating: Number(data.rating) || 0,
             reviewCount: Number(data.review_count) || 0,
             totalRatingPoints: Number(data.total_rating_points) || 0,
+            availability: data.availability || undefined,
+            currentStatus: data.current_status || 'available',
           };
           
-          console.log('🔄 Updated provider data:', {
+          console.log('🔄 Updated provider data with all fields:', {
             name: updatedProvider.name,
             rating: updatedProvider.rating,
-            reviewCount: updatedProvider.reviewCount
+            reviewCount: updatedProvider.reviewCount,
+            website: updatedProvider.website,
+            socialMedia: updatedProvider.socialMedia,
+            specialties: updatedProvider.specialties,
+            availability: updatedProvider.availability,
+            currentStatus: updatedProvider.currentStatus
           });
           
           setProvider(updatedProvider);
@@ -218,6 +230,11 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
           serviceType: data.service_type || '',
           description: data.description || '',
           phone: data.phone || undefined,
+          website: data.website || undefined,
+          socialMedia: data.social_media || {},
+          specialties: data.specialties || [],
+          yearsExperience: data.years_experience || 0,
+          certifications: data.certifications || [],
           location: {
             address: data.address || '',
             lat: Number(data.latitude) || 0,
@@ -229,6 +246,8 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
           rating: Number(data.rating) || 0,
           reviewCount: Number(data.review_count) || 0,
           totalRatingPoints: Number(data.total_rating_points) || 0,
+          availability: data.availability || undefined,
+          currentStatus: data.current_status || 'available',
         };
         
         console.log('⭐ Provider data after rating:', {
@@ -274,6 +293,11 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
           serviceType: data.service_type || '',
           description: data.description || '',
           phone: data.phone || undefined,
+          website: data.website || undefined,
+          socialMedia: data.social_media || {},
+          specialties: data.specialties || [],
+          yearsExperience: data.years_experience || 0,
+          certifications: data.certifications || [],
           location: {
             address: data.address || '',
             lat: Number(data.latitude) || 0,
@@ -285,6 +309,8 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
           rating: Number(data.rating) || 0,
           reviewCount: Number(data.review_count) || 0,
           totalRatingPoints: Number(data.total_rating_points) || 0,
+          availability: data.availability || undefined,
+          currentStatus: data.current_status || 'available',
         };
         
         console.log('🗑️ Provider data after rating deletion:', {
@@ -305,6 +331,36 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
     onStartChat(provider.id);
     onClose();
   };
+
+  // Helper function to format availability schedule
+  const formatAvailability = () => {
+    if (!provider.availability || Object.keys(provider.availability).length === 0) {
+      return null;
+    }
+
+    const days = [
+      { key: 'monday', label: 'Monday' },
+      { key: 'tuesday', label: 'Tuesday' },
+      { key: 'wednesday', label: 'Wednesday' },
+      { key: 'thursday', label: 'Thursday' },
+      { key: 'friday', label: 'Friday' },
+      { key: 'saturday', label: 'Saturday' },
+      { key: 'sunday', label: 'Sunday' },
+    ];
+
+    return days.map(({ key, label }) => {
+      const daySchedule = provider.availability![key as keyof typeof provider.availability];
+      return {
+        day: label,
+        available: daySchedule?.available || false,
+        hours: daySchedule?.available 
+          ? `${daySchedule.start} - ${daySchedule.end}`
+          : 'Closed'
+      };
+    });
+  };
+
+  const availabilitySchedule = formatAvailability();
 
   return (
     <>
@@ -336,13 +392,30 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
                       <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                     )}
                     <span className="capitalize truncate">{provider.businessType}</span>
+                    {provider.yearsExperience && provider.yearsExperience > 0 && (
+                      <>
+                        <span>•</span>
+                        <span>{provider.yearsExperience} years experience</span>
+                      </>
+                    )}
                   </div>
-                  <div className="mt-1 sm:mt-2">
+                  <div className="mt-1 sm:mt-2 flex items-center space-x-3">
                     <RatingDisplay 
                       rating={provider.rating} 
                       reviewCount={provider.reviewCount} 
                       size="md"
                     />
+                    {provider.currentStatus && (
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        provider.currentStatus === 'available' 
+                          ? 'bg-green-500 text-white' 
+                          : provider.currentStatus === 'busy'
+                          ? 'bg-yellow-500 text-white'
+                          : 'bg-gray-500 text-white'
+                      }`}>
+                        {provider.currentStatus}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -377,6 +450,18 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
                 >
                   Reviews ({ratings.length})
                 </button>
+                {availabilitySchedule && (
+                  <button
+                    onClick={() => setActiveTab('availability')}
+                    className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors flex-1 text-center ${
+                      activeTab === 'availability'
+                        ? 'border-[#3db2ff] text-[#3db2ff]'
+                        : 'border-transparent text-[#cbd5e1] hover:text-white hover:border-slate-500'
+                    }`}
+                  >
+                    Hours
+                  </button>
+                )}
               </nav>
             </div>
           </div>
@@ -384,11 +469,20 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             {activeTab === 'about' ? (
               <>
-                {/* Service Type */}
+                {/* Service Type and Specialties */}
                 <div>
-                  <span className="inline-block bg-[#3db2ff] text-white px-3 sm:px-4 py-1 sm:py-2 rounded-full text-sm font-medium">
-                    {provider.serviceType}
-                  </span>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <span className="inline-block bg-[#3db2ff] text-white px-3 sm:px-4 py-1 sm:py-2 rounded-full text-sm font-medium">
+                      {provider.serviceType}
+                    </span>
+                    {provider.specialties && provider.specialties.length > 0 && (
+                      provider.specialties.map((specialty, index) => (
+                        <span key={index} className="inline-block bg-slate-600 text-white px-2 py-1 rounded-full text-xs">
+                          {specialty}
+                        </span>
+                      ))
+                    )}
+                  </div>
                 </div>
 
                 {/* Description */}
@@ -396,6 +490,40 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
                   <h3 className="text-lg font-semibold text-white mb-2">About</h3>
                   <p className="text-[#cbd5e1] leading-relaxed text-sm sm:text-base">{provider.description}</p>
                 </div>
+
+                {/* Professional Details */}
+                {(provider.yearsExperience && provider.yearsExperience > 0) || (provider.certifications && provider.certifications.length > 0) ? (
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-4">Professional Details</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {provider.yearsExperience && provider.yearsExperience > 0 && (
+                        <div className="flex items-center space-x-3">
+                          <Award className="h-5 w-5 text-[#00c9a7]" />
+                          <div>
+                            <p className="text-white font-medium">{provider.yearsExperience} Years Experience</p>
+                            <p className="text-[#cbd5e1] text-sm">Professional experience in the field</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {provider.certifications && provider.certifications.length > 0 && (
+                        <div>
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Award className="h-5 w-5 text-[#00c9a7]" />
+                            <span className="text-white font-medium">Certifications</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {provider.certifications.map((cert, index) => (
+                              <span key={index} className="bg-[#00c9a7] text-white px-2 py-1 rounded-full text-xs">
+                                {cert}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
 
                 {/* Work Portfolio */}
                 {provider.workPortfolio && provider.workPortfolio.length > 0 && (
@@ -425,7 +553,23 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
                     {provider.phone && (
                       <div className="flex items-center space-x-3">
                         <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
-                        <span className="text-[#cbd5e1] text-sm sm:text-base">{provider.phone}</span>
+                        <a href={`tel:${provider.phone}`} className="text-[#3db2ff] hover:text-blue-400 text-sm sm:text-base">
+                          {provider.phone}
+                        </a>
+                      </div>
+                    )}
+                    {provider.website && (
+                      <div className="flex items-center space-x-3">
+                        <Globe className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
+                        <a 
+                          href={provider.website.startsWith('http') ? provider.website : `https://${provider.website}`}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-[#3db2ff] hover:text-blue-400 text-sm sm:text-base flex items-center space-x-1"
+                        >
+                          <span>{provider.website}</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
                       </div>
                     )}
                     <div className="flex items-start space-x-3">
@@ -436,8 +580,33 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
                     </div>
                   </div>
                 </div>
+
+                {/* Social Media */}
+                {provider.socialMedia && Object.keys(provider.socialMedia).length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-4">Social Media</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {Object.entries(provider.socialMedia).map(([platform, url]) => (
+                        url && (
+                          <div key={platform} className="flex items-center space-x-3">
+                            <span className="text-[#cbd5e1] capitalize w-20 text-sm">{platform}:</span>
+                            <a 
+                              href={url.startsWith('http') ? url : `https://${url}`}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-[#3db2ff] hover:text-blue-400 text-sm truncate flex items-center space-x-1"
+                            >
+                              <span>{url}</span>
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
-            ) : (
+            ) : activeTab === 'reviews' ? (
               <div>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                   <div>
@@ -475,6 +644,27 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
                     ratings={ratings} 
                     onRatingDeleted={handleRatingDeleted}
                   />
+                )}
+              </div>
+            ) : (
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Business Hours</h3>
+                {availabilitySchedule ? (
+                  <div className="space-y-3">
+                    {availabilitySchedule.map(({ day, available, hours }) => (
+                      <div key={day} className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
+                        <span className="text-white font-medium">{day}</span>
+                        <span className={`text-sm ${available ? 'text-green-400' : 'text-red-400'}`}>
+                          {hours}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-[#cbd5e1]">Business hours not available</p>
+                  </div>
                 )}
               </div>
             )}
