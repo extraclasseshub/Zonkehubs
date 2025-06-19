@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import ProviderForm from '../profile/ProviderForm';
 import EnhancedMessaging from '../messaging/EnhancedMessaging';
 import { ServiceProvider } from '../../types';
-import { User, MapPin, Phone, Mail, Eye, EyeOff, Edit, CheckCircle, XCircle, Camera, MessageCircle, Settings, BarChart3, Bell, X, Loader2 } from 'lucide-react';
+import { User, MapPin, Phone, Mail, Eye, EyeOff, Edit, CheckCircle, XCircle, Camera, MessageCircle, Settings, BarChart3, Bell, X, Loader2, Globe, Users, Award } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 export default function ProviderDashboard() {
@@ -24,7 +24,7 @@ export default function ProviderDashboard() {
     provider.location.address &&
     provider.profileImage;
 
-  // Refresh provider data to get latest ratings
+  // Refresh provider data to get latest ratings and all fields
   useEffect(() => {
     const refreshProviderData = async () => {
       if (!user || user.role !== 'provider') return;
@@ -52,6 +52,11 @@ export default function ProviderDashboard() {
             serviceType: data.service_type,
             description: data.description,
             phone: data.phone || undefined,
+            website: data.website || undefined,
+            socialMedia: data.social_media || {},
+            specialties: data.specialties || [],
+            yearsExperience: data.years_experience || 0,
+            certifications: data.certifications || [],
             location: {
               address: data.address,
               lat: data.latitude,
@@ -63,12 +68,18 @@ export default function ProviderDashboard() {
             rating: data.rating || 0,
             reviewCount: data.review_count || 0,
             totalRatingPoints: data.total_rating_points || 0,
+            availability: data.availability || undefined,
+            currentStatus: data.current_status || 'available',
           };
           
-          console.log('🔄 Provider dashboard refreshed data:', {
+          console.log('🔄 Provider dashboard refreshed data with all fields:', {
             name: updatedProvider.name,
             rating: updatedProvider.rating,
-            reviewCount: updatedProvider.reviewCount
+            reviewCount: updatedProvider.reviewCount,
+            website: updatedProvider.website,
+            socialMedia: updatedProvider.socialMedia,
+            specialties: updatedProvider.specialties,
+            availability: updatedProvider.availability
           });
           
           setProviderData(updatedProvider);
@@ -129,7 +140,7 @@ export default function ProviderDashboard() {
     setUpdateSuccess(false);
     
     try {
-      console.log('🔄 Starting profile update...', data);
+      console.log('🔄 Starting comprehensive profile update...', data);
       const success = await updateProfile(data);
       
       if (success) {
@@ -137,7 +148,7 @@ export default function ProviderDashboard() {
         setUpdateSuccess(true);
         setShowEditForm(false);
         
-        // Refresh provider data immediately
+        // Refresh provider data immediately to show updated information
         setTimeout(async () => {
           try {
             const { data: refreshedData, error } = await supabase
@@ -162,6 +173,11 @@ export default function ProviderDashboard() {
                 serviceType: refreshedData.service_type,
                 description: refreshedData.description,
                 phone: refreshedData.phone || undefined,
+                website: refreshedData.website || undefined,
+                socialMedia: refreshedData.social_media || {},
+                specialties: refreshedData.specialties || [],
+                yearsExperience: refreshedData.years_experience || 0,
+                certifications: refreshedData.certifications || [],
                 location: {
                   address: refreshedData.address,
                   lat: refreshedData.latitude,
@@ -173,7 +189,17 @@ export default function ProviderDashboard() {
                 rating: refreshedData.rating || 0,
                 reviewCount: refreshedData.review_count || 0,
                 totalRatingPoints: refreshedData.total_rating_points || 0,
+                availability: refreshedData.availability || undefined,
+                currentStatus: refreshedData.current_status || 'available',
               };
+              
+              console.log('🔄 Updated provider data after save:', {
+                name: updatedProvider.name,
+                website: updatedProvider.website,
+                socialMedia: updatedProvider.socialMedia,
+                specialties: updatedProvider.specialties,
+                availability: updatedProvider.availability
+              });
               
               setProviderData(updatedProvider);
             }
@@ -252,7 +278,7 @@ export default function ProviderDashboard() {
               <CheckCircle className="h-5 w-5 text-green-400" />
               <div>
                 <p className="text-green-400 font-medium">Profile Updated Successfully!</p>
-                <p className="text-green-300 text-sm">Your changes have been saved.</p>
+                <p className="text-green-300 text-sm">Your changes have been saved and are now visible to users.</p>
               </div>
             </div>
           </div>
@@ -536,6 +562,31 @@ export default function ProviderDashboard() {
                     </label>
                     <p className="text-white">{provider?.description || 'Not set'}</p>
                   </div>
+
+                  {/* Additional Details */}
+                  {provider?.specialties && provider.specialties.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-[#cbd5e1] mb-1">
+                        Specialties
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {provider.specialties.map((specialty, index) => (
+                          <span key={index} className="bg-[#3db2ff] text-white px-2 py-1 rounded-full text-xs">
+                            {specialty}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {provider?.yearsExperience && provider.yearsExperience > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-[#cbd5e1] mb-1">
+                        Experience
+                      </label>
+                      <p className="text-white">{provider.yearsExperience} years</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4">
@@ -552,6 +603,14 @@ export default function ProviderDashboard() {
                         <div className="flex items-center space-x-2">
                           <Phone className="h-4 w-4 text-gray-400" />
                           <span className="text-white">{provider.phone}</span>
+                        </div>
+                      )}
+                      {provider?.website && (
+                        <div className="flex items-center space-x-2">
+                          <Globe className="h-4 w-4 text-gray-400" />
+                          <a href={provider.website} target="_blank" rel="noopener noreferrer" className="text-[#3db2ff] hover:text-blue-400">
+                            {provider.website}
+                          </a>
                         </div>
                       )}
                     </div>
@@ -573,6 +632,43 @@ export default function ProviderDashboard() {
                       )}
                     </div>
                   </div>
+
+                  {/* Social Media */}
+                  {provider?.socialMedia && Object.keys(provider.socialMedia).length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-[#cbd5e1] mb-2">
+                        Social Media
+                      </label>
+                      <div className="space-y-1">
+                        {Object.entries(provider.socialMedia).map(([platform, url]) => (
+                          url && (
+                            <div key={platform} className="flex items-center space-x-2">
+                              <span className="text-xs text-gray-400 capitalize w-16">{platform}:</span>
+                              <a href={url} target="_blank" rel="noopener noreferrer" className="text-[#3db2ff] hover:text-blue-400 text-sm truncate">
+                                {url}
+                              </a>
+                            </div>
+                          )
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Certifications */}
+                  {provider?.certifications && provider.certifications.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-[#cbd5e1] mb-1">
+                        Certifications
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {provider.certifications.map((cert, index) => (
+                          <span key={index} className="bg-[#00c9a7] text-white px-2 py-1 rounded-full text-xs">
+                            {cert}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Work Portfolio */}
                   {provider?.workPortfolio && provider.workPortfolio.length > 0 && (
@@ -620,7 +716,7 @@ export default function ProviderDashboard() {
           <div className="bg-slate-800 rounded-lg p-8">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-white mb-2">Profile Settings</h2>
-              <p className="text-[#cbd5e1]">Update your service information and portfolio</p>
+              <p className="text-[#cbd5e1]">Update your service information, portfolio, and availability</p>
             </div>
             
             {updating && (

@@ -489,7 +489,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      console.log('📝 Updating provider profile with data:', data);
+      console.log('📝 Updating provider profile with comprehensive data:', data);
 
       if (!isSupabaseConfigured() || !supabase) {
         console.error('❌ Supabase not configured');
@@ -504,7 +504,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.name !== undefined) profileUpdates.name = data.name;
       if (data.profileImage !== undefined) profileUpdates.profile_image = data.profileImage;
       
-      // Service provider table updates
+      // Service provider table updates - include ALL new fields
       if (data.businessName !== undefined) providerUpdates.business_name = data.businessName;
       if (data.businessType !== undefined) providerUpdates.business_type = data.businessType;
       if (data.serviceType !== undefined) providerUpdates.service_type = data.serviceType;
@@ -562,9 +562,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Update service_providers table if there are provider updates
       if (Object.keys(providerUpdates).length > 0) {
-        console.log('📝 Updating service_providers table:', providerUpdates);
+        console.log('📝 Updating service_providers table with all fields:', providerUpdates);
         
-        // Add updated_at timestamp
+        // Add updated_at timestamp to ensure change tracking
         providerUpdates.updated_at = new Date().toISOString();
         
         const { error: providerError } = await supabase
@@ -577,12 +577,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error('❌ Error details:', providerError.message, providerError.details, providerError.hint);
           return false;
         }
-        console.log('✅ Service providers table updated successfully');
+        console.log('✅ Service providers table updated successfully with all fields');
       }
 
-      console.log('✅ Profile updated successfully');
+      console.log('✅ Profile updated successfully - reloading user data');
       
-      // Reload user profile to get updated data
+      // Force reload user profile to get updated data
       await loadUserProfile(user.id);
       return true;
     } catch (error) {

@@ -41,9 +41,12 @@ export default function ProviderAvailability({
 
   // Update local state when initialAvailability changes
   useEffect(() => {
-    if (initialAvailability) {
+    if (initialAvailability && Object.keys(initialAvailability).length > 0) {
       console.log('📅 Updating availability from props:', initialAvailability);
       setAvailability(initialAvailability);
+    } else {
+      console.log('📅 Using default availability schedule');
+      setAvailability(defaultSchedule);
     }
   }, [initialAvailability]);
 
