@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ServiceProvider } from '../../types';
-import { Loader2, MapPin, Phone, Mail, User, Building, Camera, Upload, X } from 'lucide-react';
+import { Loader2, MapPin, Phone, Mail, User, Building, Camera, Upload, X, Navigation, Target } from 'lucide-react';
+import { getCurrentLocation, geocodeAddress, LocationCoordinates } from '../../lib/mapbox';
+import mapboxgl from 'mapbox-gl';
 
 interface ProviderFormProps {
   initialData?: Partial<ServiceProvider>;
@@ -25,6 +27,16 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
     workPortfolio: initialData?.workPortfolio || [],
   });
 
+  const [showMap, setShowMap] = useState(false);
+  const [gettingLocation, setGettingLocation] = useState(false);
+  const [locationSuggestions, setLocationSuggestions] = useState<LocationCoordinates[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const marker = useRef<mapboxgl.Marker | null>(null);
+  const locationInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
   const serviceTypes = [
     'Plumbing', 'Electrical', 'Barbering', 'Cleaning', 'Carpentry',
     'Gardening', 'Painting', 'Auto Repair', 'IT Support', 'Tutoring',
@@ -33,15 +45,181 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
 
   const radiusOptions = [5, 10, 15, 20, 25, 30, 50];
 
+  // Initialize map when showMap becomes true
+  useEffect(() => {
+    if (showMap && mapContainer.current && !map.current) {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [formData.location.lng || -74.006, formData.location.lat || 40.7128], // Default to NYC
+        zoom: 13
+      });
+
+      map.current.addControl(new mapboxgl.NavigationControl());
+
+      // Add click handler to set location
+      map.current.on('click', (e) => {
+        const { lng, lat } = e.lngLat;
+        updateLocationFromCoords(lat, lng);
+      });
+
+      // Set initial marker if location exists
+      if (formData.location.lat && formData.location.lng) {
+        addMarker(formData.location.lat, formData.location.lng);
+      }
+    }
+
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, [showMap]);
+
+  // Handle clicking outside suggestions
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        !locationInputRef.current?.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const addMarker = (lat: number, lng: number) => {
+    if (!map.current) return;
+
+    // Remove existing marker
+    if (marker.current) {
+      marker.current.remove();
+    }
+
+    // Add new marker
+    marker.current = new mapboxgl.Marker({ color: '#3db2ff' })
+      .setLngLat([lng, lat])
+      .addTo(map.current);
+
+    // Center map on marker
+    map.current.flyTo({ center: [lng, lat], zoom: 15 });
+  };
+
+  const updateLocationFromCoords = async (lat: number, lng: number) => {
+    try {
+      // Reverse geocode to get address
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=pk.eyJ1IjoieGFubmlldGVjaHMiLCJhIjoiY21id2RhYmRxMHlhbzJtczAzMmh5a2xjYiJ9.98IDz3AA1B8oEFsH0g2A0Q&types=place,locality,neighborhood,address`
+      );
+      const data = await response.json();
+      
+      const address = data.features?.[0]?.place_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      
+      setFormData(prev => ({
+        ...prev,
+        location: { address, lat, lng }
+      }));
+
+      addMarker(lat, lng);
+    } catch (error) {
+      console.error('Error reverse geocoding:', error);
+      setFormData(prev => ({
+        ...prev,
+        location: { 
+          address: `${lat.toFixed(4)}, ${lng.toFixed(4)}`, 
+          lat, 
+          lng 
+        }
+      }));
+      addMarker(lat, lng);
+    }
+  };
+
+  const handleGetCurrentLocation = async () => {
+    setGettingLocation(true);
+    try {
+      const currentLocation = await getCurrentLocation();
+      setFormData(prev => ({
+        ...prev,
+        location: {
+          address: currentLocation.address || `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`,
+          lat: currentLocation.lat,
+          lng: currentLocation.lng,
+        }
+      }));
+      
+      if (map.current) {
+        addMarker(currentLocation.lat, currentLocation.lng);
+      }
+      
+      setShowSuggestions(false);
+    } catch (error) {
+      console.error('Error getting current location:', error);
+      alert('Could not get your current location. Please enter your address manually or use the map.');
+    } finally {
+      setGettingLocation(false);
+    }
+  };
+
+  const handleLocationSearch = async (query: string) => {
+    if (query.length < 3) {
+      setLocationSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    try {
+      const suggestions = await geocodeAddress(query);
+      setLocationSuggestions(suggestions.slice(0, 5));
+      setShowSuggestions(true);
+    } catch (error) {
+      console.error('Location search error:', error);
+      setLocationSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      location: { ...prev.location, address: value }
+    }));
+    
+    // Debounce the search
+    const timeoutId = setTimeout(() => {
+      handleLocationSearch(value);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  };
+
+  const handleSuggestionClick = (suggestion: LocationCoordinates) => {
+    setFormData(prev => ({
+      ...prev,
+      location: {
+        address: suggestion.address || `${suggestion.lat.toFixed(4)}, ${suggestion.lng.toFixed(4)}`,
+        lat: suggestion.lat,
+        lng: suggestion.lng,
+      }
+    }));
+    
+    if (map.current) {
+      addMarker(suggestion.lat, suggestion.lng);
+    }
+    
+    setShowSuggestions(false);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    if (name === 'address') {
-      setFormData(prev => ({
-        ...prev,
-        location: { ...prev.location, address: value }
-      }));
-    } else if (name === 'workRadius') {
+    if (name === 'workRadius') {
       setFormData(prev => ({
         ...prev,
         workRadius: parseInt(value)
@@ -309,21 +487,109 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
 
           {/* Location */}
           <div>
-            <label htmlFor="address" className="block text-sm font-medium text-[#cbd5e1] mb-2">
+            <label className="block text-sm font-medium text-[#cbd5e1] mb-2">
               Service Location *
             </label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                id="address"
-                name="address"
-                value={formData.location.address}
-                onChange={handleInputChange}
-                className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none"
-                placeholder="Enter your service area or address"
-                required
-              />
+            
+            <div className="space-y-4">
+              {/* Address Input */}
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+                <input
+                  ref={locationInputRef}
+                  type="text"
+                  value={formData.location.address}
+                  onChange={handleLocationChange}
+                  onFocus={() => formData.location.address.length >= 3 && setShowSuggestions(true)}
+                  className="w-full pl-10 pr-20 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none"
+                  placeholder="Enter your service area or address"
+                  required
+                />
+                
+                {/* Location Actions */}
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+                  <button
+                    type="button"
+                    onClick={handleGetCurrentLocation}
+                    disabled={gettingLocation}
+                    className="p-1 text-[#3db2ff] hover:text-blue-400 transition-colors disabled:opacity-50"
+                    title="Use current location"
+                  >
+                    {gettingLocation ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Target className="h-4 w-4" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowMap(!showMap)}
+                    className="p-1 text-[#00c9a7] hover:text-teal-400 transition-colors"
+                    title="Use map to select location"
+                  >
+                    <Navigation className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* Location Suggestions */}
+                {showSuggestions && locationSuggestions.length > 0 && (
+                  <div
+                    ref={suggestionsRef}
+                    className="absolute top-full left-0 right-0 mt-1 bg-slate-700 border border-slate-600 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto"
+                  >
+                    {locationSuggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="w-full text-left px-4 py-3 hover:bg-slate-600 transition-colors border-b border-slate-600 last:border-b-0"
+                      >
+                        <div className="flex items-start space-x-3">
+                          <MapPin className="h-4 w-4 text-[#3db2ff] mt-0.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white text-sm truncate">{suggestion.address}</p>
+                            <p className="text-gray-400 text-xs">
+                              {suggestion.lat.toFixed(4)}, {suggestion.lng.toFixed(4)}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Map */}
+              {showMap && (
+                <div className="border border-slate-600 rounded-lg overflow-hidden">
+                  <div className="bg-slate-700 px-4 py-2 border-b border-slate-600">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-[#cbd5e1]">Click on the map to set your location</p>
+                      <button
+                        type="button"
+                        onClick={() => setShowMap(false)}
+                        className="text-gray-400 hover:text-white transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div ref={mapContainer} className="h-64 w-full" />
+                </div>
+              )}
+
+              {/* Current Location Display */}
+              {formData.location.lat && formData.location.lng && (
+                <div className="bg-slate-700 rounded-lg p-3">
+                  <div className="flex items-center space-x-2 text-sm">
+                    <MapPin className="h-4 w-4 text-green-400" />
+                    <span className="text-green-400">Location set:</span>
+                    <span className="text-[#cbd5e1]">
+                      {formData.location.lat.toFixed(4)}, {formData.location.lng.toFixed(4)}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

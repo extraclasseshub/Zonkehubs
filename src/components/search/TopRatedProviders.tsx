@@ -121,11 +121,15 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
           // Sort by rating (descending), then by review count (descending)
           const sortedByRating = providersWithRatings.sort((a, b) => {
             // Primary sort: by rating (higher is better)
-            if (b.rating !== a.rating) {
+            if (Math.abs(b.rating - a.rating) > 0.1) { // Use small threshold for floating point comparison
               return b.rating - a.rating;
             }
             // Secondary sort: by review count (more reviews is better)
-            return b.reviewCount - a.reviewCount;
+            if (b.reviewCount !== a.reviewCount) {
+              return b.reviewCount - a.reviewCount;
+            }
+            // Tertiary sort: by total rating points (higher total indicates more engagement)
+            return b.totalRatingPoints - a.totalRatingPoints;
           });
 
           topProviders = sortedByRating.slice(0, 6);
@@ -153,6 +157,7 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
           name: p.name,
           rating: p.rating,
           reviewCount: p.reviewCount,
+          totalRatingPoints: p.totalRatingPoints,
           createdAt: p.createdAt,
           hasProfileImage: !!p.profileImage
         })));

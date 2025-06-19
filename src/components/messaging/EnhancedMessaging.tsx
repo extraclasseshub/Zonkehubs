@@ -49,8 +49,10 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
   const [showParticipantInfo, setShowParticipantInfo] = useState(false);
   const [messageFilter, setMessageFilter] = useState<'all' | 'unread' | 'starred' | 'archived'>('all');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
 
   const refreshConversations = async () => {
     if (!user || loading) return;
@@ -175,17 +177,36 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
     };
   }, [user]);
 
+  // Improved scroll to bottom with better control
   useEffect(() => {
-    scrollToBottom();
-  }, [selectedConversation?.messages]);
+    if (shouldScrollToBottom && messagesEndRef.current) {
+      const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end'
+        });
+      };
+      
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        requestAnimationFrame(scrollToBottom);
+      });
+    }
+  }, [selectedConversation?.messages, shouldScrollToBottom]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Handle scroll events to determine if user is at bottom
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50; // 50px threshold
+      setShouldScrollToBottom(isAtBottom);
+    }
   };
 
   const handleSelectConversation = async (conversation: Conversation) => {
     setSelectedConversation(conversation);
     setShowParticipantInfo(false);
+    setShouldScrollToBottom(true); // Always scroll to bottom when selecting new conversation
     
     if (conversation.unreadCount > 0) {
       await markMessagesAsRead(conversation.participant.id, user!.id);
@@ -198,6 +219,8 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
     if (!newMessage.trim() || !selectedConversation || !user) return;
 
     setSendingMessage(true);
+    setShouldScrollToBottom(true); // Scroll to bottom when sending message
+    
     try {
       await sendMessage(selectedConversation.participant.id, newMessage.trim());
       setNewMessage('');
@@ -259,7 +282,7 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
       {/* Conversations Sidebar */}
       <div className={`${selectedConversation ? 'hidden lg:flex' : 'flex'} flex-col w-full lg:w-80 bg-slate-800 border-r border-slate-700`}>
         {/* Header */}
-        <div className="p-4 border-b border-slate-700">
+        <div className="p-4 border-b border-slate-700 flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               {onClose && (
@@ -413,7 +436,7 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
         {selectedConversation ? (
           <>
             {/* Chat Header */}
-            <div className="p-4 border-b border-slate-700 bg-slate-900">
+            <div className="p-4 border-b border-slate-700 bg-slate-900 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <button
@@ -472,7 +495,12 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div 
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto p-4 space-y-4"
+              style={{ scrollBehavior: 'smooth' }}
+            >
               {selectedConversation.messages.length === 0 ? (
                 <div className="text-center py-8">
                   <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -517,7 +545,7 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
             </div>
 
             {/* Message Input */}
-            <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-700 bg-slate-900">
+            <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-700 bg-slate-900 flex-shrink-0">
               <div className="flex items-end space-x-3">
                 <div className="flex-1">
                   <div className="relative">
@@ -591,7 +619,7 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
 
       {/* Participant Info Sidebar */}
       {showParticipantInfo && selectedConversation && (
-        <div className="w-80 bg-slate-900 border-l border-slate-700 p-4">
+        <div className="w-80 bg-slate-900 border-l border-slate-700 p-4 flex-shrink-0">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-white">Contact Info</h3>
             <button
