@@ -28,10 +28,7 @@ export default function Footer() {
               <p className="text-[#cbd5e1] text-sm leading-relaxed">
                 Connecting communities through trusted local services. Find reliable service providers or grow your business with Zonke Hub.
               </p>
-              <div className="flex items-center space-x-2 text-sm text-[#cbd5e1]">
-                <Heart className="h-4 w-4 text-red-400" />
-                <span>Made with care for local communities</span>
-              </div>
+              
             </div>
 
             {/* Quick Links */}
