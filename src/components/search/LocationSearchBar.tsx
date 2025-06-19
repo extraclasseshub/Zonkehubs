@@ -51,11 +51,20 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
       map.current.addControl(new mapboxgl.NavigationControl());
 
       // Add click handler to set temporary location
-      map.current.on('click', (e) => {
+      const handleMapClick = (e) => {
         const { lng, lat } = e.lngLat;
+        console.log('Map clicked at:', { lat, lng });
         setTempMapLocation({ lat, lng });
         addMarker(lat, lng);
-      });
+      };
+
+      // Add both click and touchend handlers for better mobile support
+      map.current.on('click', handleMapClick);
+      map.current.on('touchend', handleMapClick);
+
+      // Disable map rotation for better mobile experience
+      map.current.dragRotate.disable();
+      map.current.touchZoomRotate.disableRotation();
 
       // Set initial marker if location exists
       if (userLocation) {
@@ -116,6 +125,8 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
   const addMarker = (lat: number, lng: number) => {
     if (!map.current) return;
 
+    console.log('Adding marker at:', { lat, lng });
+
     // Remove existing marker
     if (marker.current) {
       marker.current.remove();
@@ -124,7 +135,8 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
     // Add new marker
     marker.current = new mapboxgl.Marker({ 
       color: '#3db2ff',
-      draggable: true
+      draggable: true,
+      scale: 1.2 // Make marker slightly larger for better mobile visibility
     })
       .setLngLat([lng, lat])
       .addTo(map.current);
@@ -133,12 +145,17 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
     marker.current.on('dragend', () => {
       const lngLat = marker.current?.getLngLat();
       if (lngLat) {
+        console.log('Marker dragged to:', { lat: lngLat.lat, lng: lngLat.lng });
         setTempMapLocation({ lat: lngLat.lat, lng: lngLat.lng });
       }
     });
 
     // Center map on marker
-    map.current.flyTo({ center: [lng, lat], zoom: 15 });
+    map.current.flyTo({ 
+      center: [lng, lat], 
+      zoom: 15,
+      essential: true // This ensures the animation completes even on slower devices
+    });
   };
 
   const handleMapSearch = async () => {
@@ -516,14 +533,14 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
             <div ref={mapContainer} className="h-64 w-full" />
             
             {/* Map Instructions and Select Button */}
-            <div className="bg-slate-800 p-3 border-t border-slate-600">
+            <div className="bg-slate-800 p-3 sm:p-4 border-t border-slate-600">
               {/* Select Button */}
               {tempMapLocation && (
-                <div className="mb-3">
+                <div className="mb-3 sm:mb-4">
                   <button
                     type="button"
                     onClick={handleMapSelect}
-                    className="w-full bg-[#00c9a7] hover:bg-teal-500 text-white px-4 py-3 rounded-md font-medium transition-colors flex items-center justify-center space-x-2"
+                    className="w-full bg-[#00c9a7] hover:bg-teal-500 active:bg-teal-600 text-white px-4 py-3 sm:py-4 rounded-md font-medium transition-colors flex items-center justify-center space-x-2 touch-manipulation"
                   >
                     <Check className="h-5 w-5" />
                     <span>Select This Location</span>
@@ -532,14 +549,14 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
               )}
               
               {/* Instructions */}
-              <div className="flex items-start space-x-2">
+              <div className="flex items-start space-x-2 sm:space-x-3">
                 <div className="flex-shrink-0 mt-0.5">
                   <div className="w-4 h-4 rounded-full bg-[#3db2ff] flex items-center justify-center">
                     <span className="text-white text-[10px]">i</span>
                   </div>
                 </div>
                 <div className="text-xs text-[#cbd5e1]">
-                  <p>• Click anywhere on the map to place a pin</p>
+                  <p>• Tap anywhere on the map to place a pin</p>
                   <p>• Drag the pin to adjust the exact location</p>
                   <p>• Use the search box to find specific places</p>
                   <p>• Click the green button below when done</p>
