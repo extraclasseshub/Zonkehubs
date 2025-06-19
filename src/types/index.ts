@@ -80,6 +80,8 @@ export interface AuthContextType {
   sendMessage: (receiverId: string, content: string) => Promise<void>;
   getConversation: (userId1: string, userId2: string) => Promise<ChatMessage[]>;
   markMessagesAsRead: (senderId: string, receiverId: string) => Promise<void>;
+  deleteConversation: (otherUserId: string) => Promise<boolean>;
+  deleteMessage: (messageId: string, deleteType: 'delete-for-me' | 'delete-for-all') => Promise<boolean>;
   getUserById: (id: string) => Promise<User | ServiceProvider | undefined>;
   rateProvider: (providerId: string, rating: number, review?: string) => Promise<boolean>;
   getProviderRatings: (providerId: string) => Promise<Rating[]>;

@@ -583,6 +583,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('chat_messages')
         .select('*')
         .or(`and(sender_id.eq.${userId1},receiver_id.eq.${userId2}),and(sender_id.eq.${userId2},receiver_id.eq.${userId1})`)
+        .eq('deleted_for_all', false)
         .order('created_at', { ascending: true });
 
       if (error) {
@@ -597,6 +598,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         content: msg.content,
         timestamp: new Date(msg.created_at),
         read: msg.read,
+        messageType: msg.message_type || 'text',
+        fileUrl: msg.file_url,
+        fileName: msg.file_name,
+        fileSize: msg.file_size,
       }));
     } catch (error) {
       console.error('Error fetching conversation:', error);
@@ -619,6 +624,78 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error marking messages as read:', error);
+    }
+  };
+
+  const deleteConversation = async (otherUserId: string): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      if (!isSupabaseConfigured() || !supabase) return false;
+
+      // Call the database function to delete conversation for current user
+      const { error } = await supabase.rpc('delete_conversation_for_user', {
+        target_user_id: user.id,
+        other_user_id: otherUserId
+      });
+
+      if (error) {
+        console.error('Error deleting conversation:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      return false;
+    }
+  };
+
+  const deleteMessage = async (messageId: string, deleteType: 'delete-for-me' | 'delete-for-all'): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      if (!isSupabaseConfigured() || !supabase) return false;
+
+      if (deleteType === 'delete-for-all') {
+        // Mark message as deleted for all
+        const { error } = await supabase
+          .from('chat_messages')
+          .update({ deleted_for_all: true })
+          .eq('id', messageId)
+          .eq('sender_id', user.id); // Only sender can delete for all
+
+        if (error) {
+          console.error('Error deleting message for all:', error);
+          return false;
+        }
+      } else {
+        // Mark message as deleted for current user
+        const { data: message } = await supabase
+          .from('chat_messages')
+          .select('sender_id, receiver_id')
+          .eq('id', messageId)
+          .single();
+
+        if (!message) return false;
+
+        const updateField = message.sender_id === user.id ? 'deleted_for_sender' : 'deleted_for_receiver';
+        
+        const { error } = await supabase
+          .from('chat_messages')
+          .update({ [updateField]: true })
+          .eq('id', messageId);
+
+        if (error) {
+          console.error('Error deleting message for user:', error);
+          return false;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      return false;
     }
   };
 
@@ -921,6 +998,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sendMessage,
       getConversation,
       markMessagesAsRead,
+      deleteConversation,
+      deleteMessage,
       getUserById,
       rateProvider,
       getProviderRatings,
