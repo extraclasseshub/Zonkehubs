@@ -489,7 +489,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      console.log('📝 Updating provider profile...', data);
+      console.log('📝 Updating provider profile with data:', data);
 
       if (!isSupabaseConfigured() || !supabase) {
         console.error('❌ Supabase not configured');
@@ -510,11 +510,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.serviceType !== undefined) providerUpdates.service_type = data.serviceType;
       if (data.description !== undefined) providerUpdates.description = data.description;
       if (data.phone !== undefined) providerUpdates.phone = data.phone;
-      if (data.website !== undefined) providerUpdates.website = data.website;
-      if (data.socialMedia !== undefined) providerUpdates.social_media = data.socialMedia;
-      if (data.specialties !== undefined) providerUpdates.specialties = data.specialties;
-      if (data.yearsExperience !== undefined) providerUpdates.years_experience = data.yearsExperience;
-      if (data.certifications !== undefined) providerUpdates.certifications = data.certifications;
+      if (data.website !== undefined) {
+        console.log('💾 Updating website:', data.website);
+        providerUpdates.website = data.website;
+      }
+      if (data.socialMedia !== undefined) {
+        console.log('💾 Updating social media:', data.socialMedia);
+        providerUpdates.social_media = data.socialMedia;
+      }
+      if (data.specialties !== undefined) {
+        console.log('💾 Updating specialties:', data.specialties);
+        providerUpdates.specialties = data.specialties;
+      }
+      if (data.yearsExperience !== undefined) {
+        console.log('💾 Updating years experience:', data.yearsExperience);
+        providerUpdates.years_experience = data.yearsExperience;
+      }
+      if (data.certifications !== undefined) {
+        console.log('💾 Updating certifications:', data.certifications);
+        providerUpdates.certifications = data.certifications;
+      }
       if (data.location?.address !== undefined) providerUpdates.address = data.location.address;
       if (data.location?.lat !== undefined) providerUpdates.latitude = data.location.lat;
       if (data.location?.lng !== undefined) providerUpdates.longitude = data.location.lng;
@@ -525,7 +540,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('💾 Updating availability:', data.availability);
         providerUpdates.availability = data.availability;
       }
-      if (data.currentStatus !== undefined) providerUpdates.current_status = data.currentStatus;
+      if (data.currentStatus !== undefined) {
+        console.log('💾 Updating current status:', data.currentStatus);
+        providerUpdates.current_status = data.currentStatus;
+      }
       
       // Update profiles table if there are profile updates
       if (Object.keys(profileUpdates).length > 0) {
@@ -545,6 +563,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Update service_providers table if there are provider updates
       if (Object.keys(providerUpdates).length > 0) {
         console.log('📝 Updating service_providers table:', providerUpdates);
+        
+        // Add updated_at timestamp
+        providerUpdates.updated_at = new Date().toISOString();
+        
         const { error: providerError } = await supabase
           .from('service_providers')
           .update(providerUpdates)
@@ -552,6 +574,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (providerError) {
           console.error('❌ Service providers table update error:', providerError);
+          console.error('❌ Error details:', providerError.message, providerError.details, providerError.hint);
           return false;
         }
         console.log('✅ Service providers table updated successfully');

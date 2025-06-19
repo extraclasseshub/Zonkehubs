@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, Calendar, CheckCircle, XCircle, Save, Loader2, AlertCircle } from 'lucide-react';
 
 interface AvailabilitySchedule {
@@ -38,6 +38,14 @@ export default function ProviderAvailability({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Update local state when initialAvailability changes
+  useEffect(() => {
+    if (initialAvailability) {
+      console.log('📅 Updating availability from props:', initialAvailability);
+      setAvailability(initialAvailability);
+    }
+  }, [initialAvailability]);
 
   const days = [
     { key: 'monday', label: 'Monday' },
