@@ -20,7 +20,9 @@ import {
   Loader2,
   X,
   ArrowLeft,
-  Info
+  Info,
+  Download,
+  Calendar
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -38,6 +40,11 @@ interface EnhancedMessagingProps {
   onClose?: () => void;
 }
 
+interface MessageAction {
+  type: 'delete-for-me' | 'delete-for-all';
+  messageId: string;
+}
+
 export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedMessagingProps) {
   const { user, getUserById, sendMessage, markMessagesAsRead } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -48,6 +55,9 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
   const [sendingMessage, setSendingMessage] = useState(false);
   const [showParticipantInfo, setShowParticipantInfo] = useState(false);
   const [messageFilter, setMessageFilter] = useState<'all' | 'unread' | 'starred' | 'archived'>('all');
+  const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
+  const [showMessageActions, setShowMessageActions] = useState<string | null>(null);
+  const [deletingMessage, setDeletingMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -207,6 +217,8 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
     setSelectedConversation(conversation);
     setShowParticipantInfo(false);
     setShouldScrollToBottom(true); // Always scroll to bottom when selecting new conversation
+    setSelectedMessages(new Set());
+    setShowMessageActions(null);
     
     if (conversation.unreadCount > 0) {
       await markMessagesAsRead(conversation.participant.id, user!.id);
@@ -232,6 +244,49 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
     }
   };
 
+  const handleDeleteMessage = async (messageId: string, deleteType: 'delete-for-me' | 'delete-for-all') => {
+    if (!user) return;
+    
+    setDeletingMessage(messageId);
+    try {
+      if (deleteType === 'delete-for-all') {
+        // Delete message completely from database
+        const { error } = await supabase
+          .from('chat_messages')
+          .delete()
+          .eq('id', messageId)
+          .eq('sender_id', user.id); // Only sender can delete for all
+
+        if (error) {
+          console.error('Error deleting message for all:', error);
+          alert('Failed to delete message. You can only delete your own messages.');
+          return;
+        }
+      } else {
+        // Mark as deleted for current user (would need additional column in real implementation)
+        // For now, we'll just show a placeholder
+        console.log('Delete for me functionality would be implemented with additional database columns');
+      }
+
+      setShowMessageActions(null);
+      setTimeout(refreshConversations, 200);
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      alert('Failed to delete message. Please try again.');
+    } finally {
+      setDeletingMessage(null);
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // TODO: Implement file upload to storage and send file message
+      console.log('File selected for upload:', file.name);
+      alert('File upload feature coming soon!');
+    }
+  };
+
   const formatTime = (date: Date) => {
     const now = new Date();
     const messageDate = new Date(date);
@@ -246,6 +301,22 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
       return messageDate.toLocaleDateString([], { weekday: 'short' });
     } else {
       return messageDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+  };
+
+  const formatMessageDate = (date: Date) => {
+    const now = new Date();
+    const messageDate = new Date(date);
+    const diffInDays = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffInDays === 0) {
+      return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (diffInDays === 1) {
+      return `Yesterday ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (diffInDays < 7) {
+      return `${messageDate.toLocaleDateString([], { weekday: 'long' })} ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+      return `${messageDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     }
   };
 
@@ -517,20 +588,62 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
                   >
                     <div className="flex flex-col max-w-xs lg:max-w-md">
                       <div
-                        className={`px-4 py-2 rounded-2xl shadow-lg ${
+                        className={`relative group px-4 py-2 rounded-2xl shadow-lg ${
                           message.senderId === user?.id
                             ? 'bg-gradient-to-r from-[#3db2ff] to-[#2563eb] text-white rounded-br-md'
                             : 'bg-white text-slate-800 rounded-bl-md'
                         }`}
                       >
                         <p className="text-sm leading-relaxed break-words">{message.content}</p>
+                        
+                        {/* Message Actions */}
+                        {message.senderId === user?.id && (
+                          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => setShowMessageActions(showMessageActions === message.id ? null : message.id)}
+                              className="p-1 rounded-full hover:bg-black/20 transition-colors"
+                            >
+                              <MoreVertical className="h-3 w-3" />
+                            </button>
+                            
+                            {showMessageActions === message.id && (
+                              <div className="absolute top-6 right-0 bg-slate-700 border border-slate-600 rounded-md shadow-lg z-10 min-w-[150px]">
+                                <button
+                                  onClick={() => handleDeleteMessage(message.id, 'delete-for-me')}
+                                  disabled={deletingMessage === message.id}
+                                  className="w-full text-left px-3 py-2 text-sm text-[#cbd5e1] hover:bg-slate-600 transition-colors disabled:opacity-50"
+                                >
+                                  {deletingMessage === message.id ? (
+                                    <div className="flex items-center space-x-2">
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                      <span>Deleting...</span>
+                                    </div>
+                                  ) : (
+                                    'Delete for me'
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteMessage(message.id, 'delete-for-all')}
+                                  disabled={deletingMessage === message.id}
+                                  className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-slate-600 transition-colors disabled:opacity-50"
+                                >
+                                  Delete for everyone
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
+                      
                       <div className={`flex items-center space-x-1 mt-1 px-2 ${
                         message.senderId === user?.id ? 'justify-end' : 'justify-start'
                       }`}>
-                        <span className="text-xs text-gray-400">
-                          {formatTime(message.timestamp)}
-                        </span>
+                        <div className="flex items-center space-x-1">
+                          <Calendar className="h-3 w-3 text-gray-400" />
+                          <span className="text-xs text-gray-400">
+                            {formatMessageDate(message.timestamp)}
+                          </span>
+                        </div>
                         {message.senderId === user?.id && (
                           <div className="ml-1">
                             {getMessageStatus(message)}
@@ -572,6 +685,7 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
                         disabled={sendingMessage}
                         className="p-1.5 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-slate-600"
                         title="Add emoji"
+                        onClick={() => alert('Emoji picker coming soon!')}
                       >
                         <Smile className="h-4 w-4" />
                       </button>
@@ -597,10 +711,7 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
                 type="file"
                 className="hidden"
                 accept="image/*,application/pdf,.doc,.docx"
-                onChange={(e) => {
-                  // TODO: Implement file upload
-                  console.log('File selected:', e.target.files?.[0]);
-                }}
+                onChange={handleFileUpload}
               />
             </form>
           </>

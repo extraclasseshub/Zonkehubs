@@ -24,6 +24,16 @@ export interface ServiceProvider extends User {
   rating?: number;
   reviewCount?: number;
   totalRatingPoints?: number; // Sum of all ratings for average calculation
+  availability?: {
+    monday: { start: string; end: string; available: boolean };
+    tuesday: { start: string; end: string; available: boolean };
+    wednesday: { start: string; end: string; available: boolean };
+    thursday: { start: string; end: string; available: boolean };
+    friday: { start: string; end: string; available: boolean };
+    saturday: { start: string; end: string; available: boolean };
+    sunday: { start: string; end: string; available: boolean };
+  };
+  currentStatus?: 'available' | 'busy' | 'offline';
 }
 
 export interface Service {
@@ -39,6 +49,10 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   read: boolean;
+  messageType?: 'text' | 'image' | 'file';
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
 }
 
 export interface Rating {
