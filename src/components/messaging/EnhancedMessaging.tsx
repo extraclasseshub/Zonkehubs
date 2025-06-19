@@ -568,7 +568,24 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
                             conversation.unreadCount > 0 ? 'text-white font-medium' : 'text-[#cbd5e1]'
                           }`}>
                             {conversation.lastMessage.senderId === user?.id ? 'You: ' : ''}
-                            {conversation.lastMessage.content || 'Start a conversation'}
+                            {(() => {
+                              const content = conversation.lastMessage.content;
+                              if (!content) return 'Start a conversation';
+                              
+                              try {
+                                const fileData = JSON.parse(content);
+                                if (fileData.type && fileData.name && fileData.data) {
+                                  if (fileData.type === 'image') {
+                                    return '📷 Image';
+                                  } else {
+                                    return '📎 File';
+                                  }
+                                }
+                              } catch {
+                                // Not a file message, return regular content
+                              }
+                              return content;
+                            })()}
                           </p>
                           {conversation.lastMessage.senderId === user?.id && conversation.lastMessage.content && (
                             <div className="ml-2 flex-shrink-0">

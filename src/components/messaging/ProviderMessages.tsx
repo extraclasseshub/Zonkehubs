@@ -308,7 +308,22 @@ export default function ProviderMessages() {
                           conversation.unreadCount > 0 ? 'text-white font-medium' : 'text-[#cbd5e1]'
                         }`}>
                           {conversation.lastMessage.senderId === user?.id ? 'You: ' : ''}
-                          {conversation.lastMessage.content}
+                          {(() => {
+                            const content = conversation.lastMessage.content;
+                            try {
+                              const fileData = JSON.parse(content);
+                              if (fileData.type && fileData.name && fileData.data) {
+                                if (fileData.type === 'image') {
+                                  return '📷 Image';
+                                } else {
+                                  return '📎 File';
+                                }
+                              }
+                            } catch {
+                              // Not a file message, return regular content
+                            }
+                            return content;
+                          })()}
                         </p>
                         <div className="flex items-center space-x-1 ml-2">
                           {conversation.lastMessage.senderId === user?.id && (
