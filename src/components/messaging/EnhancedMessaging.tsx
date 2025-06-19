@@ -22,7 +22,6 @@ import {
   ArrowLeft,
   Info,
   Download,
-  Calendar,
   AlertTriangle
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
