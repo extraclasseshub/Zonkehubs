@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import SearchBar from '../search/SearchBar';
+import LocationSearchBar from '../search/LocationSearchBar';
 import SearchResults from '../search/SearchResults';
 import TopRatedProviders from '../search/TopRatedProviders';
-import UserMessages from '../messaging/UserMessages';
+import EnhancedMessaging from '../messaging/EnhancedMessaging';
 import ProviderModal from '../search/ProviderModal';
 import { SearchFilters, ServiceProvider } from '../../types';
+import { LocationCoordinates, filterProvidersByLocation } from '../../lib/mapbox';
 import { Search, MapPin, Filter, Users, MessageCircle, Bell, Crown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -17,6 +18,7 @@ export default function UserDashboard() {
     location: '',
     radius: 25,
   });
+  const [userLocation, setUserLocation] = useState<LocationCoordinates | null>(null);
   const [searchResults, setSearchResults] = useState<ServiceProvider[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<ServiceProvider | null>(null);
@@ -88,11 +90,16 @@ export default function UserDashboard() {
     return () => clearInterval(interval);
   }, [user]);
 
-  const performSearch = async (filters: SearchFilters) => {
+  const performSearch = async (filters: SearchFilters & { userLocation?: LocationCoordinates }) => {
     setSearchLoading(true);
     
     try {
       console.log('🔍 Performing search with filters:', filters);
+      
+      // Store user location for filtering
+      if (filters.userLocation) {
+        setUserLocation(filters.userLocation);
+      }
       
       // Build query - Make sure we get ALL required fields and proper joins
       let query = supabase
@@ -205,8 +212,25 @@ export default function UserDashboard() {
         }
       }
       
+      // Apply location filtering if user location is available
+      let filteredProviders = providers;
+      if (filters.userLocation && filters.radius) {
+        console.log('📍 Applying location filter:', {
+          userLocation: filters.userLocation,
+          radius: filters.radius
+        });
+        
+        filteredProviders = filterProvidersByLocation(
+          providers,
+          filters.userLocation,
+          filters.radius
+        );
+        
+        console.log('📍 Location filtered results:', filteredProviders.length, 'providers within', filters.radius, 'km');
+      }
+      
       // Additional client-side sorting to ensure proper order
-      const sortedProviders = providers.sort((a, b) => {
+      const sortedProviders = filteredProviders.sort((a, b) => {
         // Primary sort: by rating (highest first)
         if (b.rating !== a.rating) {
           return b.rating - a.rating;
@@ -217,7 +241,11 @@ export default function UserDashboard() {
           return b.reviewCount - a.reviewCount;
         }
         
-        // Tertiary sort: by creation date (newest first)
+        // Tertiary sort: by distance if available, otherwise by creation date
+        if ((a as any).distance !== undefined && (b as any).distance !== undefined) {
+          return (a as any).distance - (b as any).distance;
+        }
+        
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
       
@@ -226,6 +254,7 @@ export default function UserDashboard() {
         name: p.name,
         rating: p.rating,
         reviewCount: p.reviewCount,
+        distance: (p as any).distance,
         createdAt: p.createdAt
       })));
       
@@ -239,7 +268,7 @@ export default function UserDashboard() {
     }
   };
 
-  const handleSearch = async (filters: SearchFilters) => {
+  const handleSearch = async (filters: SearchFilters & { userLocation?: LocationCoordinates }) => {
     console.log('🔍 Starting search with filters:', filters);
     setSearchFilters(filters);
     setHasSearched(true);
@@ -249,7 +278,7 @@ export default function UserDashboard() {
   const handleRefreshResults = async () => {
     if (hasSearched) {
       console.log('🔄 Refreshing search results...');
-      await performSearch(searchFilters);
+      await performSearch({ ...searchFilters, userLocation: userLocation || undefined });
     }
   };
 
@@ -278,6 +307,13 @@ export default function UserDashboard() {
               <span className="text-[#cbd5e1]">
                 {publishedProvidersCount} active service {publishedProvidersCount === 1 ? 'provider' : 'providers'} available
               </span>
+              {userLocation && (
+                <>
+                  <span className="text-gray-400">•</span>
+                  <MapPin className="h-4 w-4 text-green-400" />
+                  <span className="text-green-400">Location enabled</span>
+                </>
+              )}
             </div>
           </div>
 
@@ -316,8 +352,7 @@ export default function UserDashboard() {
                         </div>
                       )}
                     </div>
-                  <span>Messages</span>
-
+                    <span>Messages</span>
                   </div>
                 </button>
               </nav>
@@ -334,7 +369,7 @@ export default function UserDashboard() {
                   {serviceTypes.map((service) => (
                     <button
                       key={service}
-                      onClick={() => handleSearch({ ...searchFilters, keyword: service, serviceType: service })}
+                      onClick={() => handleSearch({ ...searchFilters, keyword: service, serviceType: service, userLocation: userLocation || undefined })}
                       disabled={searchLoading}
                       className="bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-[#cbd5e1] hover:text-white px-4 py-3 rounded-md text-sm transition-colors flex items-center justify-center space-x-2"
                     >
@@ -347,7 +382,7 @@ export default function UserDashboard() {
 
               {/* Search Section */}
               <div className="mb-8">
-                <SearchBar onSearch={handleSearch} loading={searchLoading} />
+                <LocationSearchBar onSearch={handleSearch} loading={searchLoading} />
               </div>
 
               {/* Search Results or Top Rated Providers */}
@@ -394,6 +429,9 @@ export default function UserDashboard() {
                         <div className="text-sm text-[#cbd5e1] bg-slate-800 rounded-lg p-4 max-w-md mx-auto">
                           <p className="mb-2">💡 <strong>Tip:</strong> All providers shown are real users with verified profiles.</p>
                           <p>Search to find the perfect service provider for your needs!</p>
+                          {userLocation && (
+                            <p className="mt-2 text-green-400">📍 Location-based search enabled for better results</p>
+                          )}
                         </div>
                       )}
                     </div>
@@ -402,7 +440,9 @@ export default function UserDashboard() {
               </div>
             </>
           ) : (
-            <UserMessages chatWithProviderId={chatWithProviderId} />
+            <div className="h-[600px]">
+              <EnhancedMessaging chatWithUserId={chatWithProviderId} />
+            </div>
           )}
         </div>
       </div>

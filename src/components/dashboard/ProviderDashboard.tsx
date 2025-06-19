@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import ProviderForm from '../profile/ProviderForm';
-import ProviderMessages from '../messaging/ProviderMessages';
+import EnhancedMessaging from '../messaging/EnhancedMessaging';
 import { ServiceProvider } from '../../types';
 import { User, MapPin, Phone, Mail, Eye, EyeOff, Edit, CheckCircle, XCircle, Camera, MessageCircle, Settings, BarChart3, Bell, X, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -37,7 +37,7 @@ export default function ProviderDashboard() {
             profiles!service_providers_id_fkey(email, name, profile_image)
           `)
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (!error && data) {
           const updatedProvider: ServiceProvider = {
@@ -147,7 +147,7 @@ export default function ProviderDashboard() {
                 profiles!service_providers_id_fkey(email, name, profile_image)
               `)
               .eq('id', user!.id)
-              .single();
+              .maybeSingle();
 
             if (!error && refreshedData) {
               const updatedProvider: ServiceProvider = {
@@ -611,7 +611,9 @@ export default function ProviderDashboard() {
         )}
 
         {activeTab === 'messages' && (
-          <ProviderMessages />
+          <div className="h-[600px]">
+            <EnhancedMessaging />
+          </div>
         )}
 
         {activeTab === 'profile' && (
