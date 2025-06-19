@@ -511,7 +511,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.workRadius !== undefined) providerUpdates.work_radius = data.workRadius;
       if (data.workPortfolio !== undefined) providerUpdates.work_portfolio = data.workPortfolio;
       if (data.isPublished !== undefined) providerUpdates.is_published = data.isPublished;
-      if (data.availability !== undefined) providerUpdates.availability = data.availability;
+      if (data.availability !== undefined) {
+        console.log('💾 Updating availability:', data.availability);
+        providerUpdates.availability = data.availability;
+      }
       if (data.currentStatus !== undefined) providerUpdates.current_status = data.currentStatus;
       
       // Update profiles table if there are profile updates
@@ -545,6 +548,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       console.log('✅ Profile updated successfully');
+      
+      // Reload user profile to get updated data
       await loadUserProfile(user.id);
       return true;
     } catch (error) {

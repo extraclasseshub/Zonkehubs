@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clock, Calendar, CheckCircle, XCircle, Save } from 'lucide-react';
+import { Clock, Calendar, CheckCircle, XCircle, Save, Loader2, AlertCircle } from 'lucide-react';
 
 interface AvailabilitySchedule {
   monday: { start: string; end: string; available: boolean };
@@ -36,6 +36,8 @@ export default function ProviderAvailability({
     initialAvailability || defaultSchedule
   );
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const days = [
     { key: 'monday', label: 'Monday' },
@@ -55,6 +57,8 @@ export default function ProviderAvailability({
         available: !prev[day].available
       }
     }));
+    setError(null);
+    setSuccess(false);
   };
 
   const handleTimeChange = (
@@ -69,14 +73,61 @@ export default function ProviderAvailability({
         [timeType]: value
       }
     }));
+    setError(null);
+    setSuccess(false);
+  };
+
+  const validateSchedule = (schedule: AvailabilitySchedule): string | null => {
+    for (const [dayKey, dayData] of Object.entries(schedule)) {
+      if (dayData.available) {
+        // Validate time format
+        const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+        if (!timeRegex.test(dayData.start) || !timeRegex.test(dayData.end)) {
+          return `Invalid time format for ${dayKey}. Please use HH:MM format.`;
+        }
+
+        // Validate that end time is after start time
+        const [startHour, startMin] = dayData.start.split(':').map(Number);
+        const [endHour, endMin] = dayData.end.split(':').map(Number);
+        const startMinutes = startHour * 60 + startMin;
+        const endMinutes = endHour * 60 + endMin;
+
+        if (endMinutes <= startMinutes) {
+          return `End time must be after start time for ${dayKey}.`;
+        }
+      }
+    }
+    return null;
   };
 
   const handleSave = async () => {
     setSaving(true);
+    setError(null);
+    setSuccess(false);
+
     try {
+      // Validate the schedule
+      const validationError = validateSchedule(availability);
+      if (validationError) {
+        setError(validationError);
+        setSaving(false);
+        return;
+      }
+
+      console.log('💾 Saving availability schedule:', availability);
+      
       await onSave(availability);
+      
+      console.log('✅ Availability saved successfully');
+      setSuccess(true);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess(false);
+      }, 3000);
     } catch (error) {
-      console.error('Error saving availability:', error);
+      console.error('❌ Error saving availability:', error);
+      setError(error instanceof Error ? error.message : 'Failed to save availability schedule');
     } finally {
       setSaving(false);
     }
@@ -91,7 +142,11 @@ export default function ProviderAvailability({
       };
     });
     setAvailability(newAvailability);
+    setError(null);
+    setSuccess(false);
   };
+
+  const hasChanges = JSON.stringify(availability) !== JSON.stringify(initialAvailability || defaultSchedule);
 
   return (
     <div className="bg-slate-800 rounded-lg p-6">
@@ -109,18 +164,36 @@ export default function ProviderAvailability({
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setAllDays(true)}
-            className="text-xs bg-[#00c9a7] hover:bg-teal-500 text-white px-3 py-1 rounded transition-colors"
+            disabled={saving || loading}
+            className="text-xs bg-[#00c9a7] hover:bg-teal-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-3 py-1 rounded transition-colors"
           >
             Enable All
           </button>
           <button
             onClick={() => setAllDays(false)}
-            className="text-xs bg-slate-600 hover:bg-slate-500 text-white px-3 py-1 rounded transition-colors"
+            disabled={saving || loading}
+            className="text-xs bg-slate-600 hover:bg-slate-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-3 py-1 rounded transition-colors"
           >
             Disable All
           </button>
         </div>
       </div>
+
+      {/* Success Message */}
+      {success && (
+        <div className="mb-4 flex items-center space-x-2 text-green-400 text-sm bg-green-900/20 border border-green-600 rounded-md p-3">
+          <CheckCircle className="h-4 w-4 flex-shrink-0" />
+          <span>Availability schedule saved successfully!</span>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 flex items-center space-x-2 text-red-400 text-sm bg-red-900/20 border border-red-600 rounded-md p-3">
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
       <div className="space-y-4">
         {days.map(({ key, label }) => (
@@ -128,7 +201,8 @@ export default function ProviderAvailability({
             <div className="flex items-center space-x-3 w-32">
               <button
                 onClick={() => handleDayToggle(key)}
-                className={`p-1 rounded transition-colors ${
+                disabled={saving || loading}
+                className={`p-1 rounded transition-colors disabled:cursor-not-allowed ${
                   availability[key].available 
                     ? 'text-[#00c9a7]' 
                     : 'text-gray-400'
@@ -155,7 +229,8 @@ export default function ProviderAvailability({
                     type="time"
                     value={availability[key].start}
                     onChange={(e) => handleTimeChange(key, 'start', e.target.value)}
-                    className="bg-slate-600 border border-slate-500 rounded px-3 py-1 text-white text-sm focus:border-[#3db2ff] focus:outline-none"
+                    disabled={saving || loading}
+                    className="bg-slate-600 border border-slate-500 rounded px-3 py-1 text-white text-sm focus:border-[#3db2ff] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 
@@ -166,7 +241,8 @@ export default function ProviderAvailability({
                     type="time"
                     value={availability[key].end}
                     onChange={(e) => handleTimeChange(key, 'end', e.target.value)}
-                    className="bg-slate-600 border border-slate-500 rounded px-3 py-1 text-white text-sm focus:border-[#3db2ff] focus:outline-none"
+                    disabled={saving || loading}
+                    className="bg-slate-600 border border-slate-500 rounded px-3 py-1 text-white text-sm focus:border-[#3db2ff] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -182,21 +258,39 @@ export default function ProviderAvailability({
       <div className="mt-6 flex justify-end">
         <button
           onClick={handleSave}
-          disabled={saving || loading}
+          disabled={saving || loading || !hasChanges}
           className="bg-[#3db2ff] hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-md transition-colors flex items-center space-x-2"
         >
           {saving ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <Loader2 className="animate-spin h-4 w-4" />
               <span>Saving...</span>
             </>
           ) : (
             <>
               <Save className="h-4 w-4" />
-              <span>Save Schedule</span>
+              <span>{hasChanges ? 'Save Schedule' : 'No Changes'}</span>
             </>
           )}
         </button>
+      </div>
+
+      {/* Schedule Summary */}
+      <div className="mt-6 p-4 bg-slate-700 rounded-lg">
+        <h4 className="text-sm font-medium text-white mb-3">Schedule Summary</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          {days.map(({ key, label }) => (
+            <div key={key} className="flex justify-between">
+              <span className="text-[#cbd5e1]">{label}:</span>
+              <span className={availability[key].available ? 'text-[#00c9a7]' : 'text-gray-400'}>
+                {availability[key].available 
+                  ? `${availability[key].start} - ${availability[key].end}`
+                  : 'Closed'
+                }
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
