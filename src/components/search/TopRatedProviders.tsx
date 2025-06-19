@@ -123,8 +123,8 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
         if (providersWithRatings.length > 0) {
           // Sort by rating (descending), then by review count (descending)
           const sortedByRating = providersWithRatings.sort((a, b) => {
-            // Primary sort: by rating (higher is better)
-            if (Math.abs(b.rating - a.rating) > 0.1) { // Use small threshold for floating point comparison
+            // Primary sort: by rating (higher is better) - use small threshold for floating point comparison
+            if (Math.abs(b.rating - a.rating) > 0.1) {
               return b.rating - a.rating;
             }
             // Secondary sort: by review count (more reviews is better)

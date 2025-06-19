@@ -577,21 +577,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getConversation = async (userId1: string, userId2: string): Promise<ChatMessage[]> => {
     try {
-      if (!isSupabaseConfigured() || !supabase) return [];
+      if (!isSupabaseConfigured() || !supabase || !user) return [];
 
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .or(`and(sender_id.eq.${userId1},receiver_id.eq.${userId2}),and(sender_id.eq.${userId2},receiver_id.eq.${userId1})`)
-        .eq('deleted_for_all', false)
-        .order('created_at', { ascending: true });
+      // Use the new database function for proper message filtering
+      const { data, error } = await supabase.rpc('get_conversation_messages', {
+        user1_id: userId1,
+        user2_id: userId2
+      });
 
       if (error) {
         console.error('Error fetching conversation:', error);
         return [];
       }
 
-      return data.map(msg => ({
+      return data.map((msg: any) => ({
         id: msg.id,
         senderId: msg.sender_id,
         receiverId: msg.receiver_id,
@@ -617,7 +616,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('chat_messages')
         .update({ read: true })
         .eq('sender_id', senderId)
-        .eq('receiver_id', receiverId);
+        .eq('receiver_id', receiverId)
+        .eq('deleted_for_all', false);
 
       if (error) {
         console.error('Error marking messages as read:', error);
@@ -800,52 +800,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       console.log('✅ Rating saved successfully:', data);
-
-      // Force trigger the rating update function manually to ensure it runs
-      try {
-        console.log('🔄 Manually triggering rating calculation...');
-        
-        // Get all ratings for this provider
-        const { data: allRatings, error: ratingsError } = await supabase
-          .from('ratings')
-          .select('rating')
-          .eq('provider_id', providerId);
-
-        if (ratingsError) {
-          console.error('❌ Error fetching ratings for calculation:', ratingsError);
-        } else if (allRatings) {
-          // Calculate the new statistics
-          const totalRatings = allRatings.length;
-          const totalPoints = allRatings.reduce((sum, r) => sum + r.rating, 0);
-          const avgRating = totalRatings > 0 ? totalPoints / totalRatings : 0;
-
-          console.log('📊 Calculated rating stats:', {
-            totalRatings,
-            totalPoints,
-            avgRating: avgRating.toFixed(1)
-          });
-
-          // Update the provider's rating statistics directly
-          const { error: updateError } = await supabase
-            .from('service_providers')
-            .update({
-              rating: Math.round(avgRating * 10) / 10, // Round to 1 decimal place
-              review_count: totalRatings,
-              total_rating_points: totalPoints,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', providerId);
-
-          if (updateError) {
-            console.error('❌ Error updating provider rating stats:', updateError);
-          } else {
-            console.log('✅ Provider rating stats updated successfully');
-          }
-        }
-      } catch (calcError) {
-        console.error('❌ Error in manual rating calculation:', calcError);
-      }
-
       return true;
     } catch (error) {
       console.error('❌ Error rating provider:', error);
@@ -947,7 +901,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('ratings')
         .select('user_id, provider_id')
         .eq('id', ratingId)
-        .maybeSingle();
+        .single();
 
       if (fetchError || !ratingData) {
         console.error('❌ Error fetching rating for deletion:', fetchError);

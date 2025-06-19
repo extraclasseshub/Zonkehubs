@@ -72,29 +72,19 @@ export default function EnhancedMessaging({ chatWithUserId, onClose }: EnhancedM
 
     setLoading(true);
     try {
-      // Get messages that are not deleted for the current user
-      const { data: messages, error } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-        .eq('deleted_for_all', false)
-        .order('created_at', { ascending: true });
+      // Use the new database function for proper message filtering
+      const { data: messages, error } = await supabase.rpc('get_user_messages', {
+        user_id: user.id
+      });
 
       if (error) {
         console.error('Error fetching messages:', error);
         return;
       }
 
-      // Filter out messages deleted for current user
-      const filteredMessages = messages.filter(msg => {
-        if (msg.sender_id === user.id && msg.deleted_for_sender) return false;
-        if (msg.receiver_id === user.id && msg.deleted_for_receiver) return false;
-        return true;
-      });
-
       const conversationMap = new Map<string, ChatMessage[]>();
       
-      filteredMessages.forEach(msg => {
+      messages.forEach((msg: any) => {
         const chatMessage: ChatMessage = {
           id: msg.id,
           senderId: msg.sender_id,
