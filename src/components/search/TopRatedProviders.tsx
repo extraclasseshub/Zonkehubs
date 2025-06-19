@@ -203,7 +203,7 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
       return null;
     }
 
-    const today = new Date().toLocaleDateString('en-US', { weekday: 'lowercase' });
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const todaySchedule = provider.availability[today as keyof typeof provider.availability];
     
     if (todaySchedule?.available) {

@@ -63,7 +63,7 @@ export default function ServiceCard({ provider, onChatStart }: ServiceCardProps)
       return { status: 'Not set', color: 'text-gray-400' };
     }
 
-    const today = new Date().toLocaleDateString('en-US', { weekday: 'lowercase' });
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const todaySchedule = provider.availability[today as keyof typeof provider.availability];
     
     if (todaySchedule?.available) {
