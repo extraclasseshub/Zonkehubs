@@ -58,6 +58,8 @@ export default function AICoach({ provider }: AICoachProps) {
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
   const [showMobileNav, setShowMobileNav] = useState(false);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // OpenRouter API configuration
   const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
@@ -72,31 +74,53 @@ export default function AICoach({ provider }: AICoachProps) {
   }, [provider]);
 
   useEffect(() => {
-    // Only auto-scroll if component is initialized and other conditions are met
-    if (isInitialized && shouldAutoScroll && messagesEndRef.current && messagesContainerRef.current) {
-      const container = messagesContainerRef.current;
-      const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100;
-      
-      // Only scroll if user is near bottom, but never on initial load
-      if (isNearBottom && messages.length > 1) {
-        scrollToBottom();
-      }
+    // Only auto-scroll if user is not manually scrolling and we should auto-scroll
+    if (isInitialized && shouldAutoScroll && !isUserScrolling && messagesEndRef.current && messagesContainerRef.current) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        if (!isUserScrolling && shouldAutoScroll) {
+          scrollToBottom();
+        }
+      }, 100);
     }
-  }, [messages, shouldAutoScroll, isInitialized]);
+  }, [messages, shouldAutoScroll, isInitialized, isUserScrolling]);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current && messagesContainerRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      const container = messagesContainerRef.current;
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   };
 
   // Handle scroll events to determine if user is manually scrolling
   const handleScroll = () => {
     if (messagesContainerRef.current) {
+      // Clear any existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      
+      // Mark as user scrolling
+      setIsUserScrolling(true);
+      
       const container = messagesContainerRef.current;
-      const isAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 50;
-      setShouldAutoScroll(isAtBottom);
+  // Handle scroll events to detect manual scrolling
+      messagesEndRef.current.scrollIntoView({ 
+    // Set user scrolling flag
+    setIsUserScrolling(true);
+    
+    // Clear existing timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
     }
+    
+    // Reset scrolling flag after user stops scrolling
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsUserScrolling(false);
+    }, 1000);
   };
 
   const initializeCoach = () => {
@@ -263,15 +287,15 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
-    // Enable auto-scroll when user sends a message
-    setShouldAutoScroll(true);
-
     const userMessage: CoachingMessage = {
       id: Date.now().toString(),
       type: 'user',
       content: inputMessage.trim(),
       timestamp: new Date()
     };
+
+    // Reset scrolling state when user sends message
+    setIsUserScrolling(false);
 
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
@@ -301,6 +325,11 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
       setMessages(prev => [...prev, errorResponse]);
     } finally {
       setIsTyping(false);
+      
+      // Ensure we scroll to show the response
+      setTimeout(() => {
+        setIsUserScrolling(false);
+      }, 500);
     }
   };
 
@@ -464,7 +493,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
             <div 
               ref={messagesContainerRef}
               onScroll={handleScroll}
-              className="flex-1 overflow-y-auto p-4 space-y-4"
+              className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
               style={{ height: 'calc(100% - 140px)' }}
             >
               {messages.map((message) => (
