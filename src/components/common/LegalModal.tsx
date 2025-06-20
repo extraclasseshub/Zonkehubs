@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, FileText, Shield, Cookie, ExternalLink, HelpCircle } from 'lucide-react';
+import { X, FileText, Shield, Cookie, ExternalLink } from 'lucide-react';
 
 interface LegalModalProps {
   type: 'terms' | 'privacy' | 'cookies';
@@ -334,35 +334,35 @@ export default function LegalModal({ type, onClose }: LegalModalProps) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-[#0d182c] rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl border border-slate-700">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-700 bg-[#0d182c]">
+        <div className="flex items-center justify-between p-6 border-b border-slate-700 bg-slate-900">
           <div className="flex items-center space-x-3">
             {getIcon()}
-            <span className="hidden sm:inline">Need help? Contact our support team</span>
-            <span className="sm:hidden">Need help?</span>
+            <h2 className="text-2xl font-bold text-white">{getTitle()}</h2>
           </div>
           <button
             onClick={onClose}
-            className="bg-[#3db2ff] hover:bg-blue-500 text-white px-4 py-2 rounded-md transition-colors"
+            className="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-slate-700"
           >
-            <X className="h-6 w-6" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto bg-[#0d182c]" style={{ maxHeight: 'calc(90vh - 140px)' }}>
+        <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 140px)' }}>
           {getContent()}
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-700 bg-[#0d182c]">
+        <div className="p-6 border-t border-slate-700 bg-slate-900">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-sm text-[#cbd5e1]">
-              <HelpCircle className="h-4 w-4" />
-              <span>Need help? Contact our support team</span>
+              <ExternalLink className="h-4 w-4" />
+              <span className="hidden sm:inline">Need help? Contact our support team</span>
+              <span className="sm:hidden">Contact support</span>
             </div>
             <button
               onClick={onClose}
-              className="bg-[#3db2ff] hover:bg-blue-500 text-white px-6 py-2 rounded-md transition-colors font-medium"
+              className="bg-[#3db2ff] hover:bg-blue-500 text-white px-4 py-2 rounded-md transition-colors"
             >
               Close
             </button>
