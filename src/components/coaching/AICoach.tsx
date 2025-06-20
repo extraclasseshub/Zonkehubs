@@ -21,6 +21,7 @@ import {
   Brain,
   Sparkles
 } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 interface CoachingMessage {
   id: string;
@@ -56,6 +57,7 @@ export default function AICoach({ provider }: AICoachProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [showMobileNav, setShowMobileNav] = useState(false);
 
   // OpenRouter API configuration
   const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
@@ -343,7 +345,8 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
 
       {/* Navigation Tabs */}
       <div className="border-b border-slate-700">
-        <nav className="flex flex-col sm:flex-row">
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex">
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -393,6 +396,64 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
             </div>
           </button>
         </nav>
+        
+        {/* Mobile Navigation Dropdown */}
+        <div className="md:hidden">
+          <div className="relative">
+            <button
+              onClick={() => setShowMobileNav(!showMobileNav)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-slate-700 text-white rounded-t-lg"
+            >
+              <div className="flex items-center space-x-2">
+                {activeTab === 'chat' && (
+                  <>
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Chat Coach</span>
+                  </>
+                )}
+                {activeTab === 'insights' && (
+                  <>
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Business Insights</span>
+                  </>
+                )}
+                {activeTab === 'goals' && (
+                  <>
+                    <Target className="h-4 w-4" />
+                    <span>Growth Goals</span>
+                  </>
+                )}
+              </div>
+              <ChevronDown className={`h-4 w-4 transition-transform ${showMobileNav ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showMobileNav && (
+              <div className="absolute top-full left-0 right-0 bg-slate-700 border-t border-slate-600 shadow-lg z-10">
+                <button
+                  onClick={() => { setActiveTab('chat'); setShowMobileNav(false); }}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-slate-600 transition-colors ${activeTab === 'chat' ? 'bg-slate-600 text-[#3db2ff]' : 'text-[#cbd5e1]'}`}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  <span>Chat Coach</span>
+                </button>
+                <button
+                  onClick={() => { setActiveTab('insights'); setShowMobileNav(false); }}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-slate-600 transition-colors ${activeTab === 'insights' ? 'bg-slate-600 text-[#3db2ff]' : 'text-[#cbd5e1]'}`}
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Business Insights</span>
+                </button>
+                <button
+                  onClick={() => { setActiveTab('goals'); setShowMobileNav(false); }}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-slate-600 transition-colors rounded-b-lg ${activeTab === 'goals' ? 'bg-slate-600 text-[#3db2ff]' : 'text-[#cbd5e1]'}`}
+                >
+                  <Target className="h-4 w-4" />
+                  <span>Growth Goals</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Content */}
@@ -521,6 +582,25 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
                       setInputMessage(suggestion);
                     }}
                     className="text-xs bg-slate-700 hover:bg-slate-600 text-[#cbd5e1] px-3 py-1 rounded-full transition-colors"
+                    disabled={isTyping}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Mobile quick suggestions - Show only on small screens */}
+              <div className="mt-2 flex flex-wrap gap-1 md:hidden">
+                {[
+                  "How it works?",
+                  "Free?",
+                  "Register?",
+                  "Safe?"
+                ].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    onClick={() => setInputMessage(suggestion)}
+                    className="text-xs bg-slate-700 hover:bg-slate-600 text-[#cbd5e1] px-2 py-1 rounded transition-colors"
                     disabled={isTyping}
                   >
                     {suggestion}
