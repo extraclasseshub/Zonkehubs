@@ -129,12 +129,15 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           {/* Animated Globe Effect */}
           <div className="absolute inset-0 overflow-hidden">
             {/* Main Earth Globe - Multiple Layers for Depth */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-[#1e40af]/30 via-[#0ea5e9]/40 to-[#06b6d4]/30 animate-earth-rotation blur-2xl"></div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] rounded-full bg-gradient-to-l from-[#00c9a7]/40 via-[#10b981]/30 to-[#059669]/40 animate-earth-counter-rotation blur-xl"></div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-[#3db2ff]/50 via-transparent to-[#00c9a7]/50 animate-earth-wobble blur-lg"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-r from-[#1e40af]/20 via-transparent to-[#06b6d4]/20 animate-earth-rotation blur-3xl"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-gradient-to-l from-[#00c9a7]/25 via-transparent to-[#059669]/25 animate-earth-counter-rotation blur-2xl"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#3db2ff]/30 via-transparent to-[#00c9a7]/30 animate-earth-wobble blur-xl"></div>
+            
+            {/* Center Clear Area - Donut shape to keep center transparent */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full bg-[#0d182c]/60 backdrop-blur-sm animate-earth-center-pulse"></div>
             
             {/* Atmospheric Layers */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-gradient-to-r from-[#3db2ff]/10 via-transparent to-[#00c9a7]/10 animate-atmosphere-pulse"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] rounded-full bg-gradient-to-r from-[#3db2ff]/8 via-transparent to-[#00c9a7]/8 animate-atmosphere-pulse"></div>
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-l from-transparent via-[#0ea5e9]/5 to-transparent animate-atmosphere-drift"></div>
             
             {/* Orbital Particles - Satellites and Space Debris */}
@@ -157,14 +160,14 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           
           {/* Earth-like Texture Overlay */}
           <div 
-            className="absolute inset-0 opacity-30 bg-cover bg-center bg-no-repeat mix-blend-overlay animate-earth-texture-drift"
+            className="absolute inset-0 opacity-20 bg-cover bg-center bg-no-repeat mix-blend-overlay animate-earth-texture-drift"
             style={{
               backgroundImage: `url('https://images.pexels.com/photos/87651/earth-blue-planet-globe-planet-87651.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop')`,
             }}
           />
           
           {/* Atmospheric Glow */}
-          <div className="absolute inset-0 bg-gradient-radial from-transparent via-[#0d182c]/40 to-[#0d182c]/85 animate-glow-pulse" />
+          <div className="absolute inset-0 bg-gradient-radial from-transparent via-[#0d182c]/30 to-[#0d182c]/90 animate-glow-pulse" />
           
           {/* Additional Floating Orbs */}
           <div className="absolute top-20 left-10 w-72 h-72 bg-[#3db2ff] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
@@ -172,7 +175,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           <div className="absolute -bottom-8 left-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
           
           {/* Grid Pattern */}
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%221%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30"></div>
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.03%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%221%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
@@ -504,6 +507,17 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           }
         }
         
+        @keyframes earth-center-pulse {
+          0%, 100% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.6;
+          }
+          50% {
+            transform: translate(-50%, -50%) scale(1.05);
+            opacity: 0.4;
+          }
+        }
+        
         @keyframes atmosphere-pulse {
           0%, 100% {
             transform: translate(-50%, -50%) scale(1);
@@ -585,6 +599,10 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
         
         .animate-earth-wobble {
           animation: earth-wobble 40s ease-in-out infinite;
+        }
+        
+        .animate-earth-center-pulse {
+          animation: earth-center-pulse 12s ease-in-out infinite;
         }
         
         .animate-atmosphere-pulse {
