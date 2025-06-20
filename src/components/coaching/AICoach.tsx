@@ -19,9 +19,9 @@ import {
   ArrowRight,
   Zap,
   Brain,
-  Sparkles
+  Sparkles,
+  ChevronDown
 } from 'lucide-react';
-import { ChevronDown } from 'lucide-react';
 
 interface CoachingMessage {
   id: string;
@@ -53,18 +53,15 @@ export default function AICoach({ provider }: AICoachProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'insights' | 'goals'>('chat');
   const [insights, setInsights] = useState<BusinessInsight[]>([]);
-  const [isUserScrolling, setIsUserScrolling] = useState(false);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [showMobileDropdown, setShowMobileDropdown] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Initialize with welcome message
   useEffect(() => {
     const welcomeMessage: CoachingMessage = {
       id: '1',
       type: 'coach',
-      content: `Hello ${provider.business_name || 'there'}! I'm your AI business coach. I'm here to help you grow your service business, improve customer satisfaction, and increase your revenue. What would you like to work on today?`,
+      content: `Hello ${provider.businessName || provider.name}! I'm your AI business coach. I'm here to help you grow your ${provider.serviceType} business, improve customer satisfaction, and increase your revenue. What would you like to work on today?`,
       timestamp: new Date(),
       category: 'business'
     };
@@ -74,31 +71,14 @@ export default function AICoach({ provider }: AICoachProps) {
     generateInsights();
   }, [provider]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
-    if (shouldAutoScroll && !isUserScrolling && messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    }
-  }, [messages, shouldAutoScroll, isUserScrolling]);
+    scrollToBottom();
+  }, [messages]);
 
-  const handleScroll = () => {
-    if (messagesContainerRef.current) {
-      // Clear any existing timeout
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      
-      // Mark as user scrolling
-      setIsUserScrolling(true);
-      
-      const container = messagesContainerRef.current;
-      const isAtBottom = container.scrollHeight - container.scrollTop === container.clientHeight;
-      setShouldAutoScroll(isAtBottom);
-      
-      // Reset user scrolling flag after delay
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsUserScrolling(false);
-      }, 1000);
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -106,30 +86,36 @@ export default function AICoach({ provider }: AICoachProps) {
     const mockInsights: BusinessInsight[] = [
       {
         id: '1',
-        title: 'Optimize Your Response Time',
-        description: 'Customers who receive responses within 1 hour are 7x more likely to book your services.',
-        category: 'opportunity',
-        icon: MessageSquare,
-        priority: 'high',
-        actionable: true
+        title: 'Profile Completion',
+        description: provider.isPublished 
+          ? 'Your profile is published and visible to customers!' 
+          : 'Complete and publish your profile to increase visibility by up to 300%',
+        category: provider.isPublished ? 'success' : 'warning',
+        icon: CheckCircle,
+        priority: provider.isPublished ? 'low' : 'high',
+        actionable: !provider.isPublished
       },
       {
         id: '2',
-        title: 'Strong Rating Performance',
-        description: `Your ${provider.rating}/5 rating is above average. Keep up the excellent work!`,
-        category: 'success',
+        title: 'Customer Reviews',
+        description: provider.reviewCount > 0 
+          ? `You have ${provider.reviewCount} reviews with an average rating of ${provider.rating}/5` 
+          : 'Getting your first customer review can increase bookings by 70%',
+        category: provider.reviewCount > 0 ? 'success' : 'opportunity',
         icon: Star,
-        priority: 'medium',
-        actionable: false
+        priority: provider.reviewCount > 0 ? 'low' : 'high',
+        actionable: provider.reviewCount === 0
       },
       {
         id: '3',
-        title: 'Expand Service Portfolio',
-        description: 'Consider adding complementary services to increase average order value.',
-        category: 'opportunity',
-        icon: TrendingUp,
+        title: 'Service Portfolio',
+        description: provider.workPortfolio && provider.workPortfolio.length > 0
+          ? `You have ${provider.workPortfolio.length} portfolio images showcasing your work`
+          : 'Adding portfolio images can increase customer inquiries by 85%',
+        category: provider.workPortfolio && provider.workPortfolio.length > 0 ? 'success' : 'opportunity',
+        icon: Award,
         priority: 'medium',
-        actionable: true
+        actionable: !provider.workPortfolio || provider.workPortfolio.length === 0
       }
     ];
     setInsights(mockInsights);
@@ -149,7 +135,7 @@ export default function AICoach({ provider }: AICoachProps) {
     setInputMessage('');
     setIsLoading(true);
 
-    // Simulate AI response
+    // Simulate AI response with random business advice
     setTimeout(() => {
       const coachResponse: CoachingMessage = {
         id: (Date.now() + 1).toString(),
@@ -157,11 +143,7 @@ export default function AICoach({ provider }: AICoachProps) {
         content: generateCoachResponse(inputMessage),
         timestamp: new Date(),
         category: 'business',
-        actionItems: [
-          'Review your current pricing strategy',
-          'Update your service descriptions',
-          'Follow up with recent customers'
-        ]
+        actionItems: generateActionItems()
       };
       setMessages(prev => [...prev, coachResponse]);
       setIsLoading(false);
@@ -170,236 +152,406 @@ export default function AICoach({ provider }: AICoachProps) {
 
   const generateCoachResponse = (userInput: string): string => {
     const responses = [
-      "That's a great question! Based on your service type and current performance, I'd recommend focusing on customer retention. Studies show that increasing customer retention by just 5% can increase profits by 25-95%.",
-      "I understand your concern. Let's break this down into actionable steps. First, analyze your top-performing services and identify what makes them successful. Then, apply those insights to underperforming areas.",
-      "Excellent point! Your business has strong fundamentals. To take it to the next level, consider implementing a customer feedback system and using those insights to refine your service delivery.",
-      "That's a common challenge many service providers face. I suggest starting with small, measurable improvements. Track your response times, follow up consistently, and always exceed customer expectations."
+      `Great question about your ${provider.serviceType} business! Based on your current rating of ${provider.rating}/5, I'd recommend focusing on customer retention. Studies show that increasing customer retention by just 5% can increase profits by 25-95%.`,
+      
+      `That's an excellent point! For ${provider.serviceType} services, I suggest implementing a follow-up system. Contact customers 24-48 hours after service completion to ensure satisfaction and encourage reviews.`,
+      
+      `I understand your concern. Let's break this down: Your business in ${provider.location.address} has great potential. Consider expanding your service radius from ${provider.workRadius}km to capture more customers.`,
+      
+      `Excellent thinking! Your ${provider.businessType} approach is smart. To boost visibility, make sure your profile showcases your expertise. ${provider.workPortfolio?.length || 0} portfolio images is a good start, but aim for 10-15 for maximum impact.`,
+      
+      `That's a common challenge for ${provider.serviceType} providers. I recommend setting clear expectations upfront, providing detailed quotes, and always following through on promises. This builds trust and leads to repeat business.`,
+      
+      `Smart question! For your type of business, pricing strategy is crucial. Research competitors in ${provider.location.address}, factor in your ${provider.yearsExperience || 0} years of experience, and don't undervalue your expertise.`,
+      
+      `Good insight! Customer communication is key in the ${provider.serviceType} industry. Respond to inquiries within 2 hours when possible, and always be professional and helpful in your messaging.`,
+      
+      `That's a valuable observation! Building a strong online presence starts with your Zonke Hub profile. Make sure it's complete, professional, and showcases your best work. This is often the first impression potential customers have.`
     ];
+    
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'performance': return BarChart3;
-      case 'opportunity': return Target;
-      case 'warning': return AlertCircle;
-      case 'success': return CheckCircle;
-      default: return Lightbulb;
-    }
+  const generateActionItems = (): string[] => {
+    const actionSets = [
+      [
+        'Update your service descriptions with specific details',
+        'Add 3-5 new portfolio images this week',
+        'Follow up with recent customers for reviews'
+      ],
+      [
+        'Review and optimize your pricing strategy',
+        'Expand your service area by 5km if feasible',
+        'Create a customer follow-up checklist'
+      ],
+      [
+        'Improve response time to under 2 hours',
+        'Add professional certifications to your profile',
+        'Schedule weekly business performance reviews'
+      ],
+      [
+        'Research competitor pricing in your area',
+        'Create templates for common customer inquiries',
+        'Set up a customer feedback collection system'
+      ]
+    ];
+    
+    return actionSets[Math.floor(Math.random() * actionSets.length)];
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'performance': return 'text-blue-600 bg-blue-50';
-      case 'opportunity': return 'text-green-600 bg-green-50';
-      case 'warning': return 'text-yellow-600 bg-yellow-50';
-      case 'success': return 'text-emerald-600 bg-emerald-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case 'performance': return 'text-blue-400 bg-blue-900/20';
+      case 'opportunity': return 'text-green-400 bg-green-900/20';
+      case 'warning': return 'text-yellow-400 bg-yellow-900/20';
+      case 'success': return 'text-emerald-400 bg-emerald-900/20';
+      default: return 'text-gray-400 bg-gray-900/20';
+    }
+  };
+
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-500 text-white';
+      case 'medium': return 'bg-yellow-500 text-white';
+      case 'low': return 'bg-green-500 text-white';
+      default: return 'bg-gray-500 text-white';
+    }
+  };
+
+  const getTabLabel = (tab: string) => {
+    switch (tab) {
+      case 'chat': return 'AI Chat';
+      case 'insights': return 'Business Insights';
+      case 'goals': return 'Growth Goals';
+      default: return tab;
+    }
+  };
+
+  const getTabIcon = (tab: string) => {
+    switch (tab) {
+      case 'chat': return MessageSquare;
+      case 'insights': return Lightbulb;
+      case 'goals': return Target;
+      default: return MessageSquare;
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="bg-slate-800 rounded-lg overflow-hidden shadow-2xl">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 text-white">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="p-2 bg-white/20 rounded-lg">
-            <Brain className="w-6 h-6" />
+      <div className="bg-gradient-to-r from-[#3db2ff] to-[#00c9a7] p-4 sm:p-6">
+        <div className="flex items-center space-x-3 sm:space-x-4">
+          <div className="bg-white rounded-full p-2 sm:p-3">
+            <Brain className="h-6 w-6 sm:h-8 sm:w-8 text-[#3db2ff]" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">AI Business Coach</h1>
-            <p className="text-indigo-100">Personalized guidance for your service business</p>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div className="bg-white/10 rounded-lg p-4">
-            <div className="flex items-center space-x-2 mb-2">
-              <TrendingUp className="w-5 h-5" />
-              <span className="font-medium">Growth Potential</span>
-            </div>
-            <p className="text-2xl font-bold">High</p>
-            <p className="text-sm text-indigo-100">Based on your performance</p>
-          </div>
-          
-          <div className="bg-white/10 rounded-lg p-4">
-            <div className="flex items-center space-x-2 mb-2">
-              <Users className="w-5 h-5" />
-              <span className="font-medium">Customer Satisfaction</span>
-            </div>
-            <p className="text-2xl font-bold">{provider.rating}/5</p>
-            <p className="text-sm text-indigo-100">{provider.review_count} reviews</p>
-          </div>
-          
-          <div className="bg-white/10 rounded-lg p-4">
-            <div className="flex items-center space-x-2 mb-2">
-              <Award className="w-5 h-5" />
-              <span className="font-medium">Business Health</span>
-            </div>
-            <p className="text-2xl font-bold">Excellent</p>
-            <p className="text-sm text-indigo-100">Keep up the great work!</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-white">AI Business Coach</h2>
+            <p className="text-white/90 text-sm sm:text-base">Personalized guidance for your {provider.serviceType} business</p>
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-        {[
-          { id: 'chat', label: 'AI Chat', icon: MessageSquare },
-          { id: 'insights', label: 'Business Insights', icon: Lightbulb },
-          { id: 'goals', label: 'Growth Goals', icon: Target }
-        ].map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-md font-medium transition-all ${
-                activeTab === tab.id
-                  ? 'bg-white text-indigo-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Content Area */}
-      {activeTab === 'chat' && (
-        <div className="bg-white rounded-xl shadow-sm border">
-          {/* Messages */}
-          <div 
-            ref={messagesContainerRef}
-            onScroll={handleScroll}
-            className="h-96 overflow-y-auto p-6 space-y-4"
-          >
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+      <div className="border-b border-slate-700">
+        {/* Desktop Navigation */}
+        <nav className="hidden sm:flex">
+          {['chat', 'insights', 'goals'].map((tab) => {
+            const Icon = getTabIcon(tab);
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as any)}
+                className={`flex-1 py-3 px-4 sm:py-4 sm:px-6 text-center font-medium transition-colors ${
+                  activeTab === tab
+                    ? 'bg-slate-700 text-[#3db2ff] border-b-2 border-[#3db2ff]'
+                    : 'text-[#cbd5e1] hover:text-white hover:bg-slate-700'
+                }`}
               >
-                <div
-                  className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
-                    message.type === 'user'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-100 text-gray-900'
-                  }`}
-                >
-                  {message.type === 'coach' && (
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Bot className="w-4 h-4 text-indigo-600" />
-                      <span className="text-sm font-medium text-indigo-600">AI Coach</span>
-                    </div>
-                  )}
-                  <p className="text-sm">{message.content}</p>
-                  
-                  {message.actionItems && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-xs font-medium text-gray-600 mb-2">Action Items:</p>
-                      <ul className="space-y-1">
-                        {message.actionItems.map((item, index) => (
-                          <li key={index} className="flex items-start space-x-2 text-xs">
-                            <ArrowRight className="w-3 h-3 mt-0.5 text-indigo-600 flex-shrink-0" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  <p className="text-xs opacity-70 mt-2">
-                    {message.timestamp.toLocaleTimeString()}
-                  </p>
+                <div className="flex items-center justify-center space-x-2">
+                  <Icon className="h-4 w-4" />
+                  <span className="hidden md:inline">{getTabLabel(tab)}</span>
+                  <span className="md:hidden">{tab === 'chat' ? 'Chat' : tab === 'insights' ? 'Insights' : 'Goals'}</span>
                 </div>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Mobile Navigation Dropdown */}
+        <div className="sm:hidden">
+          <div className="relative">
+            <button
+              onClick={() => setShowMobileDropdown(!showMobileDropdown)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-slate-800 text-white"
+            >
+              <div className="flex items-center space-x-2">
+                {React.createElement(getTabIcon(activeTab), { className: "h-4 w-4" })}
+                <span>{getTabLabel(activeTab)}</span>
               </div>
-            ))}
-            
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 rounded-lg px-4 py-3">
-                  <div className="flex items-center space-x-2">
-                    <Bot className="w-4 h-4 text-indigo-600" />
-                    <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
-                    <span className="text-sm text-gray-600">AI Coach is thinking...</span>
-                  </div>
-                </div>
+              <ChevronDown className={`h-4 w-4 transition-transform ${showMobileDropdown ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showMobileDropdown && (
+              <div className="absolute top-full left-0 right-0 bg-slate-800 border-t border-slate-700 shadow-lg z-10">
+                {['chat', 'insights', 'goals'].map((tab) => {
+                  const Icon = getTabIcon(tab);
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => {
+                        setActiveTab(tab as any);
+                        setShowMobileDropdown(false);
+                      }}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-slate-700 transition-colors ${
+                        activeTab === tab ? 'bg-slate-700 text-[#3db2ff]' : 'text-[#cbd5e1]'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{getTabLabel(tab)}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
+        </div>
+      </div>
 
-          {/* Input Area */}
-          <div className="border-t p-4">
-            <div className="flex space-x-3">
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder="Ask your AI coach anything about growing your business..."
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={!inputMessage.trim() || isLoading}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <Send className="w-4 h-4" />
-              </button>
+      {/* Content */}
+      <div className="h-96 overflow-hidden">
+        {activeTab === 'chat' && (
+          <div className="h-full flex flex-col">
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`flex items-start space-x-3 max-w-[85%] ${
+                    message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+                  }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      message.type === 'user' 
+                        ? 'bg-[#3db2ff]' 
+                        : 'bg-gradient-to-r from-[#00c9a7] to-[#3db2ff]'
+                    }`}>
+                      {message.type === 'user' ? (
+                        <Users className="h-4 w-4 text-white" />
+                      ) : (
+                        <Bot className="h-4 w-4 text-white" />
+                      )}
+                    </div>
+                    <div className={`rounded-lg p-3 ${
+                      message.type === 'user'
+                        ? 'bg-[#3db2ff] text-white'
+                        : 'bg-slate-700 text-[#cbd5e1]'
+                    }`}>
+                      <div className="text-sm whitespace-pre-line leading-relaxed">
+                        {message.content}
+                      </div>
+                      {message.actionItems && (
+                        <div className="mt-3 space-y-1">
+                          <p className="text-xs font-medium opacity-75">Action Items:</p>
+                          {message.actionItems.map((item, index) => (
+                            <div key={index} className="flex items-center space-x-2 text-xs">
+                              <ArrowRight className="h-3 w-3" />
+                              <span>{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className={`text-xs mt-2 ${
+                        message.type === 'user' ? 'text-blue-100' : 'text-gray-400'
+                      }`}>
+                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="flex items-start space-x-3 max-w-[85%]">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#00c9a7] to-[#3db2ff] flex items-center justify-center flex-shrink-0">
+                      <Bot className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="bg-slate-700 rounded-lg p-3">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-[#3db2ff] rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-[#3db2ff] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-2 h-2 bg-[#3db2ff] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="p-4 border-t border-slate-700">
+              <div className="flex space-x-3">
+                <input
+                  type="text"
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                  placeholder="Ask your AI coach anything about growing your business..."
+                  className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none"
+                  disabled={isLoading}
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!inputMessage.trim() || isLoading}
+                  className="bg-gradient-to-r from-[#3db2ff] to-[#00c9a7] hover:from-[#2563eb] hover:to-[#059669] disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 disabled:scale-100 shadow-lg flex items-center justify-center"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Send className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+              
+              {/* Quick suggestions */}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[
+                  "How can I get more customers?",
+                  "What should I charge?",
+                  "Improve my profile?",
+                  "Marketing tips?"
+                ].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    onClick={() => setInputMessage(suggestion)}
+                    className="text-xs bg-slate-700 hover:bg-slate-600 text-[#cbd5e1] px-3 py-1 rounded-full transition-colors"
+                    disabled={isLoading}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {activeTab === 'insights' && (
-        <div className="space-y-4">
-          {insights.map((insight) => {
-            const Icon = insight.icon;
-            return (
-              <div key={insight.id} className="bg-white rounded-xl shadow-sm border p-6">
-                <div className="flex items-start space-x-4">
-                  <div className={`p-3 rounded-lg ${getCategoryColor(insight.category)}`}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">{insight.title}</h3>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        insight.priority === 'high' ? 'bg-red-100 text-red-800' :
-                        insight.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {insight.priority} priority
-                      </span>
+        {activeTab === 'insights' && (
+          <div className="h-full overflow-y-auto p-6">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3 mb-6">
+                <Sparkles className="h-6 w-6 text-[#3db2ff]" />
+                <h3 className="text-xl font-semibold text-white">Business Performance Insights</h3>
+              </div>
+              
+              {insights.map((insight) => (
+                <div key={insight.id} className="bg-slate-700 rounded-lg p-4 border border-slate-600">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3 flex-1">
+                      <div className={`p-2 rounded-lg ${getCategoryColor(insight.category)}`}>
+                        <insight.icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h4 className="font-semibold text-white">{insight.title}</h4>
+                          <span className={`text-xs px-2 py-1 rounded-full ${getPriorityBadge(insight.priority)}`}>
+                            {insight.priority}
+                          </span>
+                        </div>
+                        <p className="text-[#cbd5e1] text-sm">{insight.description}</p>
+                      </div>
                     </div>
-                    <p className="text-gray-600 mb-4">{insight.description}</p>
                     {insight.actionable && (
-                      <button className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-700 font-medium">
-                        <Zap className="w-4 h-4" />
-                        <span>Take Action</span>
+                      <button className="bg-[#3db2ff] hover:bg-blue-500 text-white px-3 py-1 rounded text-xs transition-colors">
+                        Take Action
                       </button>
                     )}
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {activeTab === 'goals' && (
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <div className="text-center py-12">
-            <Sparkles className="w-12 h-12 text-indigo-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Growth Goals Coming Soon</h3>
-            <p className="text-gray-600 max-w-md mx-auto">
-              We're working on personalized growth goals and tracking features to help you achieve your business objectives.
-            </p>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {activeTab === 'goals' && (
+          <div className="h-full overflow-y-auto p-6">
+            <div className="space-y-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <Target className="h-6 w-6 text-[#00c9a7]" />
+                <h3 className="text-xl font-semibold text-white">Growth Goals & Milestones</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-700 rounded-lg p-4">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <Star className="h-5 w-5 text-yellow-400" />
+                    <h4 className="font-semibold text-white">Customer Satisfaction</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#cbd5e1]">Current Rating</span>
+                      <span className="text-white">{provider.rating || 0}/5</span>
+                    </div>
+                    <div className="w-full bg-slate-600 rounded-full h-2">
+                      <div 
+                        className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${((provider.rating || 0) / 5) * 100}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-400">Goal: Maintain 4.5+ rating</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-700 rounded-lg p-4">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <Users className="h-5 w-5 text-blue-400" />
+                    <h4 className="font-semibold text-white">Customer Reviews</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#cbd5e1]">Total Reviews</span>
+                      <span className="text-white">{provider.reviewCount || 0}</span>
+                    </div>
+                    <div className="w-full bg-slate-600 rounded-full h-2">
+                      <div 
+                        className="bg-blue-400 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(((provider.reviewCount || 0) / 50) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-400">Goal: 50 reviews</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-[#3db2ff]/10 to-[#00c9a7]/10 border border-[#3db2ff]/20 rounded-lg p-4">
+                <div className="flex items-center space-x-3 mb-3">
+                  <Zap className="h-5 w-5 text-[#3db2ff]" />
+                  <h4 className="font-semibold text-white">Recommended Next Steps</h4>
+                </div>
+                <ul className="space-y-2 text-sm text-[#cbd5e1]">
+                  {!provider.isPublished && (
+                    <li className="flex items-center space-x-2">
+                      <ArrowRight className="h-3 w-3 text-[#3db2ff]" />
+                      <span>Complete and publish your profile to increase visibility</span>
+                    </li>
+                  )}
+                  {(provider.reviewCount || 0) < 5 && (
+                    <li className="flex items-center space-x-2">
+                      <ArrowRight className="h-3 w-3 text-[#3db2ff]" />
+                      <span>Focus on getting your first 5 customer reviews</span>
+                    </li>
+                  )}
+                  <li className="flex items-center space-x-2">
+                    <ArrowRight className="h-3 w-3 text-[#3db2ff]" />
+                    <span>Optimize your service description with relevant keywords</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
