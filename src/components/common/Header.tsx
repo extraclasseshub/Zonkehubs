@@ -138,7 +138,8 @@ export default function Header({ onAuthClick, onLogoClick }: HeaderProps) {
                 className="text-[#cbd5e1] hover:text-white transition-colors p-2"
                 disabled={loggingOut}
               >
-                {mobileMenuOpen ? (
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
               <button
                 onClick={onLogoClick}
                 className="focus:outline-none focus:ring-2 focus:ring-[#3db2ff] rounded-md p-1 transition-all hover:scale-105"
