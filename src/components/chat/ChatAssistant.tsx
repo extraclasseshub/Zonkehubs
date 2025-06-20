@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Send, X, Bot, User, Loader2, Minimize2, Maximize2 } from 'lucide-react';
+import { MessageCircle, Send, X, Bot, User, Loader2, Minimize2, Maximize2, AlertCircle } from 'lucide-react';
 
 interface Message {
   id: string;
   type: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  error?: boolean;
 }
 
 interface ChatAssistantProps {
@@ -25,7 +26,12 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Dappier API configuration
+  const DAPPIER_API_KEY = 'ak_01jy7azf14fe3sf8sh1cjej3d2';
+  const DAPPIER_API_URL = 'https://api.dappier.com/app/datamodelconversation';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -35,95 +41,64 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
     scrollToBottom();
   }, [messages]);
 
-  // Smart response system
-  const getAssistantResponse = (userMessage: string): string => {
-    const message = userMessage.toLowerCase();
-    
-    // Greeting responses
-    if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {
-      return "Hello! Welcome to Zonke Hub. I'm here to help you navigate our platform. Are you looking to find services or offer your own services?";
+  // Get response from Dappier API
+  const getDappierResponse = async (userMessage: string): Promise<string> => {
+    try {
+      setApiError(null);
+      
+      const response = await fetch(DAPPIER_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${DAPPIER_API_KEY}`,
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: `You are a helpful assistant for Zonke Hub, a South African platform that connects users with local service providers. 
+              
+              Key information about Zonke Hub:
+              - Free platform for both users and service providers
+              - Connects customers with local professionals (plumbers, electricians, barbers, cleaners, etc.)
+              - Features include: search by location, ratings & reviews, direct messaging, portfolio viewing
+              - Two account types: User (finds services) and Provider (offers services)
+              - Providers can set service radius, upload portfolios, set availability
+              - Built-in chat system, phone/email contact options
+              - Rating system with 1-5 stars and written reviews
+              - Location-based matching within customizable radius
+              
+              Always be helpful, friendly, and focus on how Zonke Hub can solve the user's needs. Provide specific, actionable guidance.`
+            },
+            {
+              role: 'user',
+              content: userMessage
+            }
+          ],
+          model: 'gpt-4',
+          max_tokens: 500,
+          temperature: 0.7
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.choices && data.choices[0] && data.choices[0].message) {
+        return data.choices[0].message.content;
+      } else {
+        throw new Error('Invalid response format from API');
+      }
+    } catch (error) {
+      console.error('Dappier API error:', error);
+      setApiError(error instanceof Error ? error.message : 'Unknown error occurred');
+      
+      // Fallback response
+      return "I'm sorry, I'm having trouble connecting to my knowledge base right now. Please try again in a moment, or feel free to explore Zonke Hub to find local service providers in your area!";
     }
-    
-    // How it works
-    if (message.includes('how') && (message.includes('work') || message.includes('use'))) {
-      return "Zonke Hub works in two ways:\n\n**For Service Seekers:**\n1. Create a user account\n2. Search for services by type and location\n3. View provider profiles, ratings, and reviews\n4. Contact providers directly via chat, phone, or email\n\n**For Service Providers:**\n1. Register as a provider\n2. Complete your business profile with photos\n3. Publish your profile to be visible to customers\n4. Receive inquiries and build your reputation through reviews";
-    }
-    
-    // Registration questions
-    if (message.includes('register') || message.includes('sign up') || message.includes('account')) {
-      return "Registration is easy! Click the 'Login / Register' button and choose:\n\n• **User Account** - if you're looking for services\n• **Provider Account** - if you want to offer services\n\nYou'll need to provide your name, email, and create a password. Provider accounts require additional business information to complete your profile.";
-    }
-    
-    // Services questions
-    if (message.includes('service') && (message.includes('type') || message.includes('available') || message.includes('offer'))) {
-      return "We support a wide range of services including:\n\n• **Home Services:** Plumbing, Electrical, Cleaning, Carpentry, Painting\n• **Personal Services:** Barbering, Fitness Training, Tutoring\n• **Professional Services:** IT Support, Photography, Catering\n• **Outdoor Services:** Gardening, Auto Repair\n\nProviders can offer any legitimate service - just specify your service type when creating your profile!";
-    }
-    
-    // Pricing questions
-    if (message.includes('cost') || message.includes('price') || message.includes('fee') || message.includes('pay')) {
-      return "Zonke Hub is **completely free** for both users and service providers! There are no subscription fees, listing fees, or commission charges.\n\nService providers set their own prices and handle payments directly with customers. We simply connect you - the rest is up to you!";
-    }
-    
-    // Safety and trust
-    if (message.includes('safe') || message.includes('trust') || message.includes('verify') || message.includes('reliable')) {
-      return "Your safety is our priority:\n\n• **Verified Profiles:** All providers must complete detailed profiles\n• **Rating System:** Real customer reviews and ratings\n• **Direct Communication:** Chat with providers before hiring\n• **Transparent Information:** View provider details, portfolio, and contact info\n\nWe recommend always communicating through our platform initially and checking reviews before hiring any service provider.";
-    }
-    
-    // Location and radius
-    if (message.includes('location') || message.includes('area') || message.includes('radius') || message.includes('distance')) {
-      return "Our location-based matching helps you find nearby providers:\n\n• **Search by Location:** Enter your area or address\n• **Service Radius:** Each provider sets their service area (5-50km)\n• **Distance Filtering:** Adjust search radius to find providers within your preferred distance\n\nThis ensures you find providers who can actually serve your location efficiently!";
-    }
-    
-    // Reviews and ratings
-    if (message.includes('review') || message.includes('rating') || message.includes('feedback')) {
-      return "Our review system builds trust in the community:\n\n• **5-Star Rating System:** Rate providers from 1-5 stars\n• **Written Reviews:** Share detailed feedback about your experience\n• **Verified Reviews:** Only customers who've contacted providers can leave reviews\n• **Edit/Delete:** You can update or remove your own reviews\n• **Top Rated:** Best providers are featured on the homepage\n\nHonest reviews help everyone make better decisions!";
-    }
-    
-    // Communication and messaging
-    if (message.includes('chat') || message.includes('message') || message.includes('contact') || message.includes('communicate')) {
-      return "Multiple ways to connect with service providers:\n\n• **Built-in Chat:** Secure messaging system within the platform\n• **Phone Calls:** Direct phone numbers (if provided)\n• **Email:** Contact via email addresses\n• **Real-time Messaging:** Instant notifications for new messages\n\nStart with our chat system to discuss your needs, then move to phone/email for detailed planning!";
-    }
-    
-    // Provider profile questions
-    if (message.includes('profile') && (message.includes('complete') || message.includes('create') || message.includes('setup'))) {
-      return "Creating a strong provider profile:\n\n**Required Information:**\n• Service type and description\n• Service area and radius\n• Contact information\n• Profile picture\n\n**Optional but Recommended:**\n• Business name (if applicable)\n• Phone number\n• Work portfolio photos\n• Detailed service description\n\n**Publishing:** Once complete, publish your profile to appear in search results!";
-    }
-    
-    // Getting started
-    if (message.includes('start') || message.includes('begin') || message.includes('first')) {
-      return "Getting started is simple:\n\n**Looking for Services?**\n1. Click 'Login / Register' → Choose 'User'\n2. Browse featured providers or use search\n3. Contact providers that interest you\n\n**Offering Services?**\n1. Click 'Login / Register' → Choose 'Provider'\n2. Complete your business profile\n3. Add photos and publish your profile\n4. Start receiving customer inquiries!\n\nNeed help with any specific step?";
-    }
-    
-    // Technical support
-    if (message.includes('problem') || message.includes('issue') || message.includes('bug') || message.includes('error')) {
-      return "I'm sorry you're experiencing issues! Here are some quick fixes:\n\n• **Refresh the page** - solves most temporary issues\n• **Clear browser cache** - helps with loading problems\n• **Check internet connection** - ensure stable connectivity\n• **Try different browser** - compatibility issues\n\nIf problems persist, please note the specific error message and contact our support team. What specific issue are you encountering?";
-    }
-    
-    // Business questions
-    if (message.includes('business') || message.includes('company') || message.includes('individual')) {
-      return "We welcome both individual providers and businesses:\n\n**Individual Providers:**\n• Solo professionals (plumbers, tutors, etc.)\n• Freelancers and independent contractors\n• Personal service providers\n\n**Business Providers:**\n• Companies with multiple employees\n• Established service businesses\n• Teams and partnerships\n\nBoth types can create profiles and offer services. Just select the appropriate business type during registration!";
-    }
-    
-    // Portfolio and photos
-    if (message.includes('photo') || message.includes('portfolio') || message.includes('image') || message.includes('picture')) {
-      return "Visual content helps build trust:\n\n**Profile Picture:**\n• Professional headshot or business logo\n• Required for publishing your profile\n• First impression for potential customers\n\n**Work Portfolio:**\n• Upload photos of completed projects\n• Show before/after transformations\n• Demonstrate quality and style\n• Multiple images recommended\n\n**Tips:** Use high-quality, well-lit photos that showcase your best work!";
-    }
-    
-    // Search and discovery
-    if (message.includes('search') || message.includes('find') || message.includes('discover')) {
-      return "Finding the right provider is easy:\n\n**Search Methods:**\n• **Keyword Search:** Enter service type (e.g., 'plumber')\n• **Location Filter:** Specify your area\n• **Radius Selection:** Choose distance preference\n• **Browse Categories:** Click service type buttons\n\n**Results Show:**\n• Provider ratings and reviews\n• Service area and distance\n• Profile photos and portfolios\n• Contact information\n\n**Sorting:** Results are sorted by rating, then by newest providers.";
-    }
-    
-    // Default helpful response
-    const helpfulResponses = [
-      "I'd be happy to help! Could you be more specific about what you'd like to know? I can explain how Zonke Hub works, help with registration, or answer questions about finding/offering services.",
-      "Great question! I can help you with information about our platform, how to get started, pricing, safety features, or any other aspect of Zonke Hub. What would you like to know more about?",
-      "I'm here to assist! Whether you're looking to find services or offer your own, I can guide you through the process. What specific information would be most helpful for you?",
-      "Thanks for asking! I can explain how our platform works, help you understand the registration process, or answer questions about safety, pricing, and features. What interests you most?",
-      "I'd love to help you learn more about Zonke Hub! I can cover topics like how to find services, how to become a provider, our review system, messaging features, and much more. What would you like to explore?"
-    ];
-    
-    return helpfulResponses[Math.floor(Math.random() * helpfulResponses.length)];
   };
 
   const handleSendMessage = async () => {
@@ -140,18 +115,31 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
     setInputMessage('');
     setIsTyping(true);
 
-    // Simulate typing delay for more natural feel
-    setTimeout(() => {
+    try {
+      // Get response from Dappier API
+      const responseContent = await getDappierResponse(userMessage.content);
+      
       const assistantResponse: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: getAssistantResponse(userMessage.content),
+        content: responseContent,
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, assistantResponse]);
+    } catch (error) {
+      console.error('Error getting assistant response:', error);
+      const errorResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: "I apologize, but I'm experiencing technical difficulties. Please try again later or explore Zonke Hub to discover local service providers!",
+        timestamp: new Date(),
+        error: true
+      };
+      setMessages(prev => [...prev, errorResponse]);
+    } finally {
       setIsTyping(false);
-    }, 1000 + Math.random() * 1000); // 1-2 second delay
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -252,8 +240,16 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
                     <div className={`rounded-lg p-2 sm:p-3 ${
                       message.type === 'user'
                         ? 'bg-[#3db2ff] text-white'
-                        : 'bg-slate-700 text-[#cbd5e1]'
+                        : message.error 
+                          ? 'bg-red-900/20 border border-red-600 text-red-300'
+                          : 'bg-slate-700 text-[#cbd5e1]'
                     }`}>
+                      {message.error && (
+                        <div className="flex items-center space-x-2 mb-2">
+                          <AlertCircle className="h-4 w-4 text-red-400" />
+                          <span className="text-xs text-red-400">Connection Error</span>
+                        </div>
+                      )}
                       <div className="text-xs sm:text-sm whitespace-pre-line leading-relaxed break-words">
                         {message.content}
                       </div>
@@ -285,6 +281,16 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
               )}
               <div ref={messagesEndRef} />
             </div>
+
+            {/* API Error Banner */}
+            {apiError && (
+              <div className="px-3 sm:px-4 py-2 bg-red-900/20 border-t border-red-600">
+                <div className="flex items-center space-x-2 text-red-400 text-xs">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>API Connection Issue: {apiError}</span>
+                </div>
+              </div>
+            )}
 
             {/* Input */}
             <div className="p-3 sm:p-4 border-t border-slate-700 bg-slate-800 rounded-b-lg">
