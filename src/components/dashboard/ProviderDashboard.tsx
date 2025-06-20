@@ -10,7 +10,6 @@ import { supabase } from '../../lib/supabase';
 export default function ProviderDashboard() {
   const { user, updateProfile } = useAuth();
   const [showEditForm, setShowEditForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'messages' | 'profile'>('overview');
   const [activeTab, setActiveTab] = useState<'overview' | 'messages' | 'profile' | 'coach'>('overview');
   const [updating, setUpdating] = useState(false);
   const [showNotificationBanner, setShowNotificationBanner] = useState(false);
