@@ -97,11 +97,6 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
   const getOpenRouterResponse = async (userMessage: string): Promise<string> => {
     try {
       if (!OPENROUTER_API_KEY) {
-        // Return fallback response immediately if no API key
-        return getFallbackResponse(userMessage);
-      }
-      
-      setApiError(null);
       
       const response = await fetch(OPENROUTER_API_URL, {
         method: 'POST',
@@ -153,10 +148,8 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
       }
     } catch (error) {
       console.error('OpenRouter API error:', error);
-      setApiError(error instanceof Error ? error.message : 'Unknown error occurred');
-      
-      // Re-throw error to be handled in handleSendMessage
-      throw error;
+      // Always return fallback response instead of throwing error
+      return getFallbackResponse(userMessage);
     }
   };
 
@@ -187,18 +180,8 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
 
       setMessages(prev => [...prev, assistantResponse]);
     } catch (error) {
-      console.error('Error getting assistant response:', error);
-      
-      // Use fallback response instead of error message to maintain conversation flow
-      const fallbackResponse = getFallbackResponse(userMessage.content);
-      
-      const errorResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: fallbackResponse,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorResponse]);
+      // This should never happen now since getOpenRouterResponse always returns a response
+      console.error('Unexpected error in handleSendMessage:', error);
     } finally {
       setIsTyping(false);
     }
@@ -345,14 +328,6 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
             </div>
 
             {/* API Error Banner */}
-            {apiError && (
-              <div className="px-3 sm:px-4 py-2 bg-red-900/20 border-t border-red-600">
-                <div className="flex items-center space-x-2 text-red-400 text-xs">
-                  <AlertCircle className="h-3 w-3" />
-                  <span>Using offline mode - I can still help with general questions about Zonke Hub</span>
-                </div>
-              </div>
-            )}
 
             {/* Input */}
             <div className="p-3 sm:p-4 border-t border-slate-700 bg-slate-800 rounded-b-lg">
