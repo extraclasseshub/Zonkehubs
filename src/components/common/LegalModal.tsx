@@ -344,7 +344,7 @@ export default function LegalModal({ type, onClose }: LegalModalProps) {
             </div>
             <button
               onClick={onClose}
-              className="bg-[#3db2ff] hover:bg-blue-500 text-white px-6 py-2 rounded-md transition-colors"
+              className="bg-[#3db2ff] hover:bg-blue-500 text-white px-6 py-3 rounded-md transition-colors font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               Close
             </button>
