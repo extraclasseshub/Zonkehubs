@@ -55,7 +55,7 @@ export default function AICoach({ provider }: AICoachProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // OpenAI API configuration
-  const OPENAI_API_KEY = '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';
+  const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
   const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
   useEffect(() => {
@@ -151,6 +151,10 @@ export default function AICoach({ provider }: AICoachProps) {
 
   const getAIResponse = async (userMessage: string): Promise<string> => {
     try {
+      if (!OPENAI_API_KEY) {
+        throw new Error('OpenAI API key not configured');
+      }
+
       const systemPrompt = `You are an expert business coach specializing in helping service providers grow their businesses. You're coaching ${provider.name}, who provides ${provider.serviceType} services.
 
 Provider Details:
@@ -182,7 +186,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
           'Authorization': `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4',
+          model: 'gpt-3.5-turbo',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage }
@@ -193,7 +197,8 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
       });
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`API request failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
 
       const data = await response.json();
