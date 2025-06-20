@@ -56,6 +56,8 @@ export default function AICoach({ provider }: AICoachProps) {
   const [showMobileDropdown, setShowMobileDropdown] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
 
   // OpenRouter API configuration
   const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
@@ -68,11 +70,28 @@ export default function AICoach({ provider }: AICoachProps) {
   }, [provider]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (shouldScrollToBottom && messagesEndRef.current) {
+      const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end'
+        });
+      };
+      
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        requestAnimationFrame(scrollToBottom);
+      });
+    }
+  }, [messages, shouldScrollToBottom]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Handle scroll events to determine if user is at bottom
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50; // 50px threshold
+      setShouldScrollToBottom(isAtBottom);
+    }
   };
 
   const initializeCoach = () => {
@@ -239,6 +258,9 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
+    // Always scroll to bottom when sending a message
+    setShouldScrollToBottom(true);
+
     const userMessage: CoachingMessage = {
       id: Date.now().toString(),
       type: 'user',
@@ -404,7 +426,13 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
         {activeTab === 'chat' && (
           <div className="h-full flex flex-col">
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div 
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+              maxHeight: 'calc(100vh - 200px)', // Ensure it doesn't exceed viewport
+              scrollBehavior: 'smooth'
+            }}
+            >
               {messages.map((message) => (
                 <div
                   key={message.id}
