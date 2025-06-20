@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import ProviderForm from '../profile/ProviderForm';
 import EnhancedMessaging from '../messaging/EnhancedMessaging';
+import AICoach from '../coaching/AICoach';
 import { ServiceProvider } from '../../types';
 import { User, MapPin, Phone, Mail, Eye, EyeOff, Edit, CheckCircle, XCircle, Camera, MessageCircle, Settings, BarChart3, Bell, X, Loader2, Globe, Users, Award } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -10,6 +11,7 @@ export default function ProviderDashboard() {
   const { user, updateProfile } = useAuth();
   const [showEditForm, setShowEditForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'messages' | 'profile'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'messages' | 'profile' | 'coach'>('overview');
   const [updating, setUpdating] = useState(false);
   const [showNotificationBanner, setShowNotificationBanner] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState(false);
@@ -389,6 +391,20 @@ export default function ProviderDashboard() {
               </button>
               
               <button
+                onClick={() => setActiveTab('coach')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'coach'
+                    ? 'border-[#3db2ff] text-[#3db2ff]'
+                    : 'border-transparent text-[#cbd5e1] hover:text-white hover:border-slate-500'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Award className="h-4 w-4" />
+                  <span>AI Coach</span>
+                </div>
+              </button>
+              
+              <button
                 onClick={() => setActiveTab('profile')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'profile'
@@ -709,6 +725,12 @@ export default function ProviderDashboard() {
         {activeTab === 'messages' && (
           <div className="h-[600px]">
             <EnhancedMessaging />
+          </div>
+        )}
+
+        {activeTab === 'coach' && (
+          <div className="max-w-4xl mx-auto">
+            <AICoach provider={provider} />
           </div>
         )}
 
