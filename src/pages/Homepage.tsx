@@ -57,6 +57,17 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
     }
   };
 
+  const handleAuthClick = (mode?: 'login' | 'register') => {
+    if (mode) {
+      setAuthMode(mode);
+    }
+    onAuthClick();
+    // Prevent any scrolling when auth modal opens
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }, 0);
+  };
+
   const handleLogoClick = () => {
     if (showAuth) {
       onAuthClose();
@@ -74,7 +85,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
 
   if (showAuth) {
     return (
-      <div className="min-h-screen bg-[#0d182c] flex flex-col">
+      <div className="min-h-screen bg-[#0d182c] flex flex-col fixed inset-0 overflow-y-auto">
         <Header onAuthClick={onAuthClick} onLogoClick={handleLogoClick} />
         <div className="flex-1 flex items-center justify-center p-4 pt-20">
           <div className="w-full max-w-md">
@@ -170,7 +181,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
             <button
-              onClick={onAuthClick}
+              onClick={() => handleAuthClick('login')}
               className="group relative bg-gradient-to-r from-[#3db2ff] to-[#2563eb] hover:from-[#2563eb] hover:to-[#1d4ed8] text-white px-8 py-4 rounded-2xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-[#3db2ff]/25"
             >
               <span className="flex items-center justify-center space-x-2">
@@ -181,10 +192,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
             </button>
             
             <button
-              onClick={() => {
-                setAuthMode('register');
-                onAuthClick();
-              }}
+              onClick={() => handleAuthClick('register')}
               className="group relative bg-gradient-to-r from-[#00c9a7] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white px-8 py-4 rounded-2xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-[#00c9a7]/25"
             >
               <span className="flex items-center justify-center space-x-2">
@@ -353,10 +361,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => {
-                setAuthMode('register');
-                onAuthClick();
-              }}
+              onClick={() => handleAuthClick('register')}
               className="group bg-gradient-to-r from-[#3db2ff] to-[#00c9a7] hover:from-[#2563eb] hover:to-[#059669] text-white px-8 py-4 rounded-2xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-2xl"
             >
               <span className="flex items-center justify-center space-x-2">

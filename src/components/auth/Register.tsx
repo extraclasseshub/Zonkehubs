@@ -21,6 +21,7 @@ export default function Register({ onSwitchToLogin, onClose }: RegisterProps) {
   const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
+    // Prevent default form submission behavior
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -81,6 +82,7 @@ export default function Register({ onSwitchToLogin, onClose }: RegisterProps) {
       console.error('❌ Registration failed:', err);
       setError('Registration failed. Please check your internet connection and try again.');
     } finally {
+      window.scrollTo(0, 0);
       setLoading(false);
     }
   };

@@ -14,6 +14,7 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
   const { resetPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
+    // Prevent default form submission behavior
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -28,6 +29,7 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
     } catch (err) {
       setError('Failed to send reset email. Please try again.');
     } finally {
+      window.scrollTo(0, 0);
       setLoading(false);
     }
   };

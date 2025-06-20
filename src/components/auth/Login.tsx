@@ -15,6 +15,7 @@ export default function Login({ onSwitchToRegister, onSwitchToForgotPassword, on
   const [error, setError] = useState('');
   const { login } = useAuth();
 
+  // Prevent form submission from scrolling the page
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -54,6 +55,7 @@ export default function Login({ onSwitchToRegister, onSwitchToForgotPassword, on
       console.error('❌ Login failed:', err);
       setError('Login failed. Please check your internet connection and try again.');
     } finally {
+      window.scrollTo(0, 0);
       setLoading(false);
     }
   };
