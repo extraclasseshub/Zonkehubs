@@ -390,7 +390,7 @@ export default function ProviderDashboard() {
               </button>
               
               <button
-                onClick={() => setActiveTab('coach')}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTab('coach'); }}
                 className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'coach'
                     ? 'border-[#3db2ff] text-[#3db2ff]'

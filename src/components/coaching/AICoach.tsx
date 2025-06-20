@@ -235,6 +235,9 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
+    
+    // Prevent any scrolling behavior
+    event?.preventDefault();
 
     const userMessage: CoachingMessage = {
       id: Date.now().toString(),
@@ -277,6 +280,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      e.stopPropagation();
       handleSendMessage();
     }
   };
@@ -437,8 +441,8 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t border-slate-700">
-              <div className="flex space-x-3">
+            <div className="p-4 border-t border-slate-700" onClick={(e) => e.stopPropagation()}>
+              <form onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); handleSendMessage(); }} className="flex space-x-3">
                 <input
                   type="text"
                   value={inputMessage}
@@ -449,6 +453,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
                   disabled={isTyping}
                 />
                 <button
+                  type="submit"
                   onClick={handleSendMessage}
                   disabled={!inputMessage.trim() || isTyping}
                   className="bg-gradient-to-r from-[#3db2ff] to-[#00c9a7] hover:from-[#2563eb] hover:to-[#059669] disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 disabled:scale-100 shadow-lg flex items-center justify-center"
@@ -459,7 +464,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
                     <Send className="h-5 w-5" />
                   )}
                 </button>
-              </div>
+              </form>
               
               {/* Quick suggestions */}
               <div className="mt-3 flex flex-wrap gap-2">
@@ -471,7 +476,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
                 ].map((suggestion) => (
                   <button
                     key={suggestion}
-                    onClick={() => setInputMessage(suggestion)}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setInputMessage(suggestion); }}
                     className="text-xs bg-slate-700 hover:bg-slate-600 text-[#cbd5e1] px-3 py-1 rounded-full transition-colors"
                     disabled={isTyping}
                   >
