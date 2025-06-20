@@ -4,6 +4,7 @@ import { MapPin, Phone, Mail, Star, User, Building, MessageCircle, Eye, Globe, C
 import ChatModal from '../chat/ChatModal';
 import ProviderModal from './ProviderModal';
 import RatingDisplay from '../rating/RatingDisplay';
+import ImagePreviewModal from '../common/ImagePreviewModal';
 
 interface ServiceCardProps {
   provider: ServiceProvider;
@@ -13,6 +14,8 @@ interface ServiceCardProps {
 export default function ServiceCard({ provider, onChatStart }: ServiceCardProps) {
   const [showChat, setShowChat] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // Debug log to see what data this card receives
   useEffect(() => {
@@ -55,6 +58,11 @@ export default function ServiceCard({ provider, onChatStart }: ServiceCardProps)
     } else {
       setShowChat(true); // Fallback to direct chat modal
     }
+  };
+
+  const handleImageClick = (index: number) => {
+    setSelectedImageIndex(index);
+    setShowImagePreview(true);
   };
 
   // Helper function to get availability status
@@ -232,11 +240,15 @@ export default function ServiceCard({ provider, onChatStart }: ServiceCardProps)
                   key={index}
                   src={image}
                   alt={`Work ${index + 1}`}
-                  className="w-16 h-16 object-cover rounded-md flex-shrink-0"
+                  className="w-16 h-16 object-cover rounded-md flex-shrink-0 cursor-pointer hover:scale-105 transition-transform"
+                  onClick={() => handleImageClick(index)}
                 />
               ))}
               {provider.workPortfolio.length > 3 && (
-                <div className="w-16 h-16 bg-slate-700 rounded-md flex items-center justify-center flex-shrink-0">
+                <div 
+                  className="w-16 h-16 bg-slate-700 rounded-md flex items-center justify-center flex-shrink-0 cursor-pointer hover:scale-105 transition-transform"
+                  onClick={() => handleImageClick(3)}
+                >
                   <span className="text-xs text-[#cbd5e1]">+{provider.workPortfolio.length - 3}</span>
                 </div>
               )}
@@ -303,6 +315,16 @@ export default function ServiceCard({ provider, onChatStart }: ServiceCardProps)
           provider={provider}
           onClose={handleModalClose}
           onStartChat={handleStartChatFromModal}
+        />
+      )}
+
+      {/* Image Preview Modal */}
+      {showImagePreview && provider.workPortfolio && (
+        <ImagePreviewModal
+          images={provider.workPortfolio}
+          initialIndex={selectedImageIndex}
+          onClose={() => setShowImagePreview(false)}
+          title={`${provider.businessName || provider.name} - Work Portfolio`}
         />
       )}
     </>

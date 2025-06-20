@@ -5,6 +5,7 @@ import { X, MapPin, Phone, Mail, Star, User, Building, MessageCircle, Loader2, G
 import RatingModal from '../rating/RatingModal';
 import RatingDisplay from '../rating/RatingDisplay';
 import ReviewsList from '../rating/ReviewsList';
+import ImagePreviewModal from '../common/ImagePreviewModal';
 import { supabase } from '../../lib/supabase';
 
 interface ProviderModalProps {
@@ -22,6 +23,8 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
   const [provider, setProvider] = useState(initialProvider);
   const [loading, setLoading] = useState(false);
   const [ratingsLoading, setRatingsLoading] = useState(false);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   
   const canRate = user && user.role === 'user';
 
@@ -332,6 +335,11 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
     onClose();
   };
 
+  const handleImageClick = (index: number) => {
+    setSelectedImageIndex(index);
+    setShowImagePreview(true);
+  };
+
   // Helper function to format availability schedule
   const formatAvailability = () => {
     if (!provider.availability || Object.keys(provider.availability).length === 0) {
@@ -535,7 +543,8 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
                           key={index}
                           src={image}
                           alt={`Work ${index + 1}`}
-                          className="w-full h-24 sm:h-32 object-cover rounded-lg hover:scale-105 transition-transform cursor-pointer"
+                          className="w-full h-24 sm:h-32 object-cover rounded-lg hover:scale-105 transition-transform cursor-pointer shadow-lg hover:shadow-xl"
+                          onClick={() => handleImageClick(index)}
                         />
                       ))}
                     </div>
@@ -709,6 +718,16 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
           provider={provider}
           onClose={() => setShowRatingModal(false)}
           onRatingSubmitted={handleRatingSubmitted}
+        />
+      )}
+
+      {/* Image Preview Modal */}
+      {showImagePreview && provider.workPortfolio && (
+        <ImagePreviewModal
+          images={provider.workPortfolio}
+          initialIndex={selectedImageIndex}
+          onClose={() => setShowImagePreview(false)}
+          title={`${provider.businessName || provider.name} - Work Portfolio`}
         />
       )}
     </>

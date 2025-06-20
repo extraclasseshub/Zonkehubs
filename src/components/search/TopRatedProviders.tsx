@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ServiceProvider } from '../../types';
 import { Star, MapPin, User, Building, Crown, Award, Loader2, Globe, Clock } from 'lucide-react';
 import RatingDisplay from '../rating/RatingDisplay';
+import ImagePreviewModal from '../common/ImagePreviewModal';
 import { supabase } from '../../lib/supabase';
 
 interface TopRatedProvidersProps {
@@ -11,6 +12,9 @@ interface TopRatedProvidersProps {
 export default function TopRatedProviders({ onProviderClick }: TopRatedProvidersProps) {
   const [topProviders, setTopProviders] = useState<ServiceProvider[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<ServiceProvider | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
     const loadTopProviders = async () => {
@@ -216,6 +220,13 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
     }
   };
 
+  const handleImageClick = (provider: ServiceProvider, index: number, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the provider click
+    setSelectedProvider(provider);
+    setSelectedImageIndex(index);
+    setShowImagePreview(true);
+  };
+
   if (loading) {
     return (
       <div className="bg-slate-800 rounded-lg p-8 text-center">
@@ -416,11 +427,15 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
                         key={imgIndex}
                         src={image}
                         alt={`Work ${imgIndex + 1}`}
-                        className="w-12 h-12 object-cover rounded-md flex-shrink-0"
+                        className="w-12 h-12 object-cover rounded-md flex-shrink-0 cursor-pointer hover:scale-110 transition-transform"
+                        onClick={(e) => handleImageClick(provider, imgIndex, e)}
                       />
                     ))}
                     {provider.workPortfolio.length > 3 && (
-                      <div className="w-12 h-12 bg-slate-700 rounded-md flex items-center justify-center flex-shrink-0">
+                      <div 
+                        className="w-12 h-12 bg-slate-700 rounded-md flex items-center justify-center flex-shrink-0 cursor-pointer hover:scale-110 transition-transform"
+                        onClick={(e) => handleImageClick(provider, 3, e)}
+                      >
                         <span className="text-xs text-[#cbd5e1]">+{provider.workPortfolio.length - 3}</span>
                       </div>
                     )}
@@ -455,6 +470,16 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
           Showing {topProviders.length} featured providers • Use search to find specific services
         </p>
       </div>
+
+      {/* Image Preview Modal */}
+      {showImagePreview && selectedProvider?.workPortfolio && (
+        <ImagePreviewModal
+          images={selectedProvider.workPortfolio}
+          initialIndex={selectedImageIndex}
+          onClose={() => setShowImagePreview(false)}
+          title={`${selectedProvider.businessName || selectedProvider.name} - Work Portfolio`}
+        />
+      )}
     </div>
   );
 }
