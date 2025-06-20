@@ -126,6 +126,20 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
             className="absolute inset-0 bg-gradient-to-br from-[#0a0f1c] via-[#1a2332] to-[#0d1421]"
           />
           
+          {/* Animated Earth Globe - Single Centered Effect */}
+          <div className="absolute inset-0 overflow-hidden">
+            {/* Main Earth Globe */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-gradient-to-r from-[#1e40af]/40 via-[#0ea5e9]/50 to-[#06b6d4]/40 animate-earth-rotation blur-xl"></div>
+            
+            {/* Earth Texture Overlay */}
+            <div 
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full opacity-60 bg-cover bg-center bg-no-repeat mix-blend-overlay animate-earth-texture-drift"
+              style={{
+                backgroundImage: `url('https://images.pexels.com/photos/87651/earth-blue-planet-globe-planet-87651.jpeg?auto=compress&cs=tinysrgb&w=800&h=800&fit=crop')`,
+              }}
+            />
+          </div>
+          
           {/* Additional Floating Orbs */}
           <div className="absolute top-20 left-10 w-72 h-72 bg-[#3db2ff] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
           <div className="absolute top-40 right-10 w-72 h-72 bg-[#00c9a7] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
@@ -423,6 +437,38 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           to {
             transform: translate(-50%, -50%) rotate(0deg);
           }
+        }
+        
+        @keyframes earth-rotation {
+          from {
+            transform: translate(-50%, -50%) rotate(0deg) scale(1);
+          }
+          50% {
+            transform: translate(-50%, -50%) rotate(180deg) scale(1.05);
+          }
+          to {
+            transform: translate(-50%, -50%) rotate(360deg) scale(1);
+          }
+        }
+        
+        @keyframes earth-texture-drift {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+        
+        .animate-earth-rotation {
+          animation: earth-rotation 30s linear infinite;
+        }
+        
+        .animate-earth-texture-drift {
+          animation: earth-texture-drift 45s ease-in-out infinite;
         }
       `}</style>
     </>
