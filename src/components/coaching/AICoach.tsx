@@ -235,9 +235,6 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
-    
-    // Prevent any scrolling behavior
-    event?.preventDefault();
 
     const userMessage: CoachingMessage = {
       id: Date.now().toString(),
@@ -280,7 +277,6 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      e.stopPropagation();
       handleSendMessage();
     }
   };
@@ -325,10 +321,10 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
 
       {/* Navigation Tabs */}
       <div className="border-b border-slate-700">
-        <nav className="flex">
+        <nav className="flex flex-col sm:flex-row">
           <button
             onClick={() => setActiveTab('chat')}
-            className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
+            className={`flex-1 py-3 px-4 sm:py-4 sm:px-6 text-center font-medium transition-colors ${
               activeTab === 'chat'
                 ? 'bg-slate-700 text-[#3db2ff] border-b-2 border-[#3db2ff]'
                 : 'text-[#cbd5e1] hover:text-white hover:bg-slate-700'
@@ -341,7 +337,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
           </button>
           <button
             onClick={() => setActiveTab('insights')}
-            className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
+            className={`flex-1 py-3 px-4 sm:py-4 sm:px-6 text-center font-medium transition-colors ${
               activeTab === 'insights'
                 ? 'bg-slate-700 text-[#3db2ff] border-b-2 border-[#3db2ff]'
                 : 'text-[#cbd5e1] hover:text-white hover:bg-slate-700'
@@ -354,7 +350,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
           </button>
           <button
             onClick={() => setActiveTab('goals')}
-            className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
+            className={`flex-1 py-3 px-4 sm:py-4 sm:px-6 text-center font-medium transition-colors ${
               activeTab === 'goals'
                 ? 'bg-slate-700 text-[#3db2ff] border-b-2 border-[#3db2ff]'
                 : 'text-[#cbd5e1] hover:text-white hover:bg-slate-700'
@@ -441,8 +437,8 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t border-slate-700" onClick={(e) => e.stopPropagation()}>
-              <form onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); handleSendMessage(); }} className="flex space-x-3">
+            <div className="p-4 border-t border-slate-700">
+              <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex space-x-3">
                 <input
                   type="text"
                   value={inputMessage}
@@ -454,7 +450,6 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
                 />
                 <button
                   type="submit"
-                  onClick={handleSendMessage}
                   disabled={!inputMessage.trim() || isTyping}
                   className="bg-gradient-to-r from-[#3db2ff] to-[#00c9a7] hover:from-[#2563eb] hover:to-[#059669] disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 disabled:scale-100 shadow-lg flex items-center justify-center"
                 >
@@ -467,7 +462,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
               </form>
               
               {/* Quick suggestions */}
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2 overflow-x-auto">
                 {[
                   "How can I get more customers?",
                   "What should I charge for my services?",
@@ -476,7 +471,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
                 ].map((suggestion) => (
                   <button
                     key={suggestion}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setInputMessage(suggestion); }}
+                    onClick={() => setInputMessage(suggestion)}
                     className="text-xs bg-slate-700 hover:bg-slate-600 text-[#cbd5e1] px-3 py-1 rounded-full transition-colors"
                     disabled={isTyping}
                   >

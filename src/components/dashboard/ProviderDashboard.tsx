@@ -352,10 +352,10 @@ export default function ProviderDashboard() {
         {/* Navigation Tabs */}
         <div className="mb-8">
           <div className="border-b border-slate-700">
-            <nav className="-mb-px flex space-x-8">
+            <nav className="-mb-px flex flex-col sm:flex-row sm:space-x-8 space-y-2 sm:space-y-0">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                className={`py-3 px-4 sm:py-2 sm:px-1 border-b-2 font-medium text-sm transition-colors rounded-t-lg sm:rounded-none ${
                   activeTab === 'overview'
                     ? 'border-[#3db2ff] text-[#3db2ff]'
                     : 'border-transparent text-[#cbd5e1] hover:text-white hover:border-slate-500'
@@ -369,7 +369,7 @@ export default function ProviderDashboard() {
               
               <button
                 onClick={() => setActiveTab('messages')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors relative ${
+                className={`py-3 px-4 sm:py-2 sm:px-1 border-b-2 font-medium text-sm transition-colors rounded-t-lg sm:rounded-none relative ${
                   activeTab === 'messages'
                     ? 'border-[#3db2ff] text-[#3db2ff]'
                     : 'border-transparent text-[#cbd5e1] hover:text-white hover:border-slate-500'
@@ -390,8 +390,8 @@ export default function ProviderDashboard() {
               </button>
               
               <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveTab('coach'); }}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                onClick={() => setActiveTab('coach')}
+                className={`py-3 px-4 sm:py-2 sm:px-1 border-b-2 font-medium text-sm transition-colors rounded-t-lg sm:rounded-none ${
                   activeTab === 'coach'
                     ? 'border-[#3db2ff] text-[#3db2ff]'
                     : 'border-transparent text-[#cbd5e1] hover:text-white hover:border-slate-500'
@@ -405,7 +405,7 @@ export default function ProviderDashboard() {
               
               <button
                 onClick={() => setActiveTab('profile')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                className={`py-3 px-4 sm:py-2 sm:px-1 border-b-2 font-medium text-sm transition-colors rounded-t-lg sm:rounded-none ${
                   activeTab === 'profile'
                     ? 'border-[#3db2ff] text-[#3db2ff]'
                     : 'border-transparent text-[#cbd5e1] hover:text-white hover:border-slate-500'
