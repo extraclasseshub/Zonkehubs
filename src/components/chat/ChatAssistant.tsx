@@ -97,6 +97,8 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
   const getOpenRouterResponse = async (userMessage: string): Promise<string> => {
     try {
       if (!OPENROUTER_API_KEY) {
+        return getFallbackResponse(userMessage);
+      }
       
       const response = await fetch(OPENROUTER_API_URL, {
         method: 'POST',
