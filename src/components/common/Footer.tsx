@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, ExternalLink, Shield, Cookie, FileText, Mail, Phone, MapPin } from 'lucide-react';
+import { Heart, Shield, Cookie, FileText, Mail, Phone, MapPin, Twitter, Facebook, Linkedin } from 'lucide-react';
 import LegalModal from './LegalModal';
 
 export default function Footer() {
@@ -154,28 +154,28 @@ export default function Footer() {
                     href="https://twitter.com/zonkehub" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-[#cbd5e1] hover:text-[#3db2ff] transition-colors"
+                    className="text-[#cbd5e1] hover:text-[#1da1f2] transition-colors"
                     aria-label="Follow us on Twitter"
                   >
-                    <ExternalLink className="h-4 w-4" />
+                    <Twitter className="h-4 w-4" />
                   </a>
                   <a 
                     href="https://facebook.com/zonkehub" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-[#cbd5e1] hover:text-[#3db2ff] transition-colors"
+                    className="text-[#cbd5e1] hover:text-[#1877f2] transition-colors"
                     aria-label="Follow us on Facebook"
                   >
-                    <ExternalLink className="h-4 w-4" />
+                    <Facebook className="h-4 w-4" />
                   </a>
                   <a 
                     href="https://linkedin.com/company/zonkehub" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-[#cbd5e1] hover:text-[#3db2ff] transition-colors"
+                    className="text-[#cbd5e1] hover:text-[#0a66c2] transition-colors"
                     aria-label="Follow us on LinkedIn"
                   >
-                    <ExternalLink className="h-4 w-4" />
+                    <Linkedin className="h-4 w-4" />
                   </a>
                 </div>
               </div>
