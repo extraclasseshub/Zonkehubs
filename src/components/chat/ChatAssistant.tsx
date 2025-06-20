@@ -30,8 +30,8 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Dappier API configuration - Replace with your actual API key
-  const DAPPIER_API_KEY = process.env.REACT_APP_DAPPIER_API_KEY || '';
-  const DAPPIER_API_URL = 'https://api.dappier.com/app/datamodelconversation';
+  const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
+  const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -86,20 +86,22 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
   };
 
   // Get response from Dappier API
-  const getDappierResponse = async (userMessage: string): Promise<string> => {
+  const getOpenRouterResponse = async (userMessage: string): Promise<string> => {
     // If no API key is configured, use fallback responses
-    if (!DAPPIER_API_KEY) {
+    if (!OPENROUTER_API_KEY) {
       return getFallbackResponse(userMessage);
     }
     
     try {
       setApiError(null);
       
-      const response = await fetch(DAPPIER_API_URL, {
+      const response = await fetch(OPENROUTER_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${DAPPIER_API_KEY}`,
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Zonke Hub Assistant',
         },
         body: JSON.stringify({
           messages: [
@@ -124,7 +126,7 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
               content: userMessage
             }
           ],
-          model: 'gpt-4',
+          model: 'openai/gpt-3.5-turbo',
           max_tokens: 500,
           temperature: 0.7
         })
@@ -142,7 +144,7 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
         throw new Error('Invalid response format from API');
       }
     } catch (error) {
-      console.error('Dappier API error:', error);
+      console.error('OpenRouter API error:', error);
       setApiError(error instanceof Error ? error.message : 'Unknown error occurred');
       
       // Use fallback response when API fails
@@ -165,8 +167,8 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
     setIsTyping(true);
 
     try {
-      // Get response from Dappier API
-      const responseContent = await getDappierResponse(userMessage.content);
+      // Get response from OpenRouter API
+      const responseContent = await getOpenRouterResponse(userMessage.content);
       
       const assistantResponse: Message = {
         id: (Date.now() + 1).toString(),
