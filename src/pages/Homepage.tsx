@@ -121,18 +121,37 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0">
-          {/* Background Image */}
+          {/* 3D-Inspired Animated Background */}
           <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            className="absolute inset-0 bg-gradient-to-br from-[#0a0f1c] via-[#1a2332] to-[#0d1421]"
+          />
+          
+          {/* Animated Globe Effect */}
+          <div className="absolute inset-0 overflow-hidden">
+            {/* Rotating Gradient Orbs */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-gradient-to-r from-[#3db2ff]/20 via-[#00c9a7]/20 to-[#3db2ff]/20 animate-spin-slow blur-3xl"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-gradient-to-l from-[#00c9a7]/30 via-transparent to-[#3db2ff]/30 animate-reverse-spin blur-2xl"></div>
+            
+            {/* Floating Particles */}
+            <div className="absolute top-20 left-20 w-2 h-2 bg-[#3db2ff] rounded-full animate-float opacity-60"></div>
+            <div className="absolute top-40 right-32 w-1 h-1 bg-[#00c9a7] rounded-full animate-float-delayed opacity-80"></div>
+            <div className="absolute bottom-32 left-1/4 w-1.5 h-1.5 bg-white rounded-full animate-float-slow opacity-40"></div>
+            <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-[#3db2ff] rounded-full animate-float-fast opacity-70"></div>
+            <div className="absolute bottom-1/4 right-20 w-2 h-2 bg-[#00c9a7] rounded-full animate-float opacity-50"></div>
+          </div>
+          
+          {/* Earth-like Texture Overlay */}
+          <div 
+            className="absolute inset-0 opacity-20 bg-cover bg-center bg-no-repeat mix-blend-overlay"
             style={{
-              backgroundImage: `url('https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop')`,
+              backgroundImage: `url('https://images.pexels.com/photos/87651/earth-blue-planet-globe-planet-87651.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop')`,
             }}
           />
           
-          {/* Dark Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0d182c]/90 via-[#1e293b]/85 to-[#0f172a]/90" />
+          {/* Atmospheric Glow */}
+          <div className="absolute inset-0 bg-gradient-radial from-transparent via-[#0d182c]/50 to-[#0d182c]/90" />
           
-          {/* Floating Orbs */}
+          {/* Additional Floating Orbs */}
           <div className="absolute top-20 left-10 w-72 h-72 bg-[#3db2ff] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
           <div className="absolute top-40 right-10 w-72 h-72 bg-[#00c9a7] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
           <div className="absolute -bottom-8 left-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
@@ -411,6 +430,64 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
         
         .animate-gradient-x {
           animation: gradient-x 3s ease infinite;
+        }
+        
+        @keyframes spin-slow {
+          from {
+            transform: translate(-50%, -50%) rotate(0deg);
+          }
+          to {
+            transform: translate(-50%, -50%) rotate(360deg);
+          }
+        }
+        
+        @keyframes reverse-spin {
+          from {
+            transform: translate(-50%, -50%) rotate(360deg);
+          }
+          to {
+            transform: translate(-50%, -50%) rotate(0deg);
+          }
+        }
+        
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px) translateX(0px);
+          }
+          50% {
+            transform: translateY(-20px) translateX(10px);
+          }
+        }
+        
+        .animate-spin-slow {
+          animation: spin-slow 20s linear infinite;
+        }
+        
+        .animate-reverse-spin {
+          animation: reverse-spin 25s linear infinite;
+        }
+        
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+        
+        .animate-float-delayed {
+          animation: float 8s ease-in-out infinite;
+          animation-delay: 2s;
+        }
+        
+        .animate-float-slow {
+          animation: float 10s ease-in-out infinite;
+          animation-delay: 1s;
+        }
+        
+        .animate-float-fast {
+          animation: float 4s ease-in-out infinite;
+          animation-delay: 3s;
+        }
+        
+        .bg-gradient-radial {
+          background: radial-gradient(circle at center, var(--tw-gradient-stops));
         }
       `}</style>
     </>
