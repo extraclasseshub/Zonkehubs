@@ -55,6 +55,7 @@ export default function AICoach({ provider }: AICoachProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // OpenRouter API configuration
   const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
@@ -64,19 +65,22 @@ export default function AICoach({ provider }: AICoachProps) {
     // Initialize with welcome message and business insights
     initializeCoach();
     generateBusinessInsights();
+    // Mark as initialized after a brief delay to prevent initial scroll
+    setTimeout(() => setIsInitialized(true), 100);
   }, [provider]);
 
   useEffect(() => {
-    // Only auto-scroll if user is near the bottom or if it's a new message from user
-    if (shouldAutoScroll && messagesEndRef.current && messagesContainerRef.current) {
+    // Only auto-scroll if component is initialized and other conditions are met
+    if (isInitialized && shouldAutoScroll && messagesEndRef.current && messagesContainerRef.current) {
       const container = messagesContainerRef.current;
       const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100;
       
-      if (isNearBottom || messages.length === 1) {
+      // Only scroll if user is near bottom, but never on initial load
+      if (isNearBottom && messages.length > 1) {
         scrollToBottom();
       }
     }
-  }, [messages, shouldAutoScroll]);
+  }, [messages, shouldAutoScroll, isInitialized]);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current && messagesContainerRef.current) {
