@@ -54,9 +54,9 @@ export default function AICoach({ provider }: AICoachProps) {
   const [insights, setInsights] = useState<BusinessInsight[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // OpenAI API configuration
-  const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
-  const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+  // OpenRouter API configuration
+  const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
+  const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
   useEffect(() => {
     // Initialize with welcome message and business insights
@@ -151,8 +151,8 @@ export default function AICoach({ provider }: AICoachProps) {
 
   const getAIResponse = async (userMessage: string): Promise<string> => {
     try {
-      if (!OPENAI_API_KEY) {
-        throw new Error('OpenAI API key not configured');
+      if (!OPENROUTER_API_KEY) {
+        throw new Error('OpenRouter API key not configured');
       }
 
       const systemPrompt = `You are an expert business coach specializing in helping service providers grow their businesses. You're coaching ${provider.name}, who provides ${provider.serviceType} services.
@@ -179,14 +179,16 @@ Provide specific, actionable business advice. Focus on:
 
 Keep responses conversational, encouraging, and under 200 words. Include specific action items when relevant.`;
 
-      const response = await fetch(OPENAI_API_URL, {
+      const response = await fetch(OPENROUTER_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Zonke Hub AI Coach',
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
+          model: 'openai/gpt-3.5-turbo',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage }
@@ -204,7 +206,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
       const data = await response.json();
       return data.choices[0].message.content;
     } catch (error) {
-      console.error('OpenAI API error:', error);
+      console.error('OpenRouter API error:', error);
       return getFallbackResponse(userMessage);
     }
   };
