@@ -4,7 +4,7 @@ import ProviderForm from '../profile/ProviderForm';
 import EnhancedMessaging from '../messaging/EnhancedMessaging';
 import AICoach from '../coaching/AICoach';
 import { ServiceProvider } from '../../types';
-import { User, MapPin, Phone, Mail, Eye, EyeOff, Edit, CheckCircle, XCircle, Camera, MessageCircle, Settings, BarChart3, Bell, X, Loader2, Globe, Users, Award } from 'lucide-react';
+import { User, MapPin, Phone, Mail, Eye, EyeOff, Edit, CheckCircle, XCircle, Camera, MessageCircle, Settings, BarChart3, Bell, X, Loader2, Globe, Users, Award, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 export default function ProviderDashboard() {
@@ -17,6 +17,7 @@ export default function ProviderDashboard() {
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [providerData, setProviderData] = useState<ServiceProvider | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showMobileNav, setShowMobileNav] = useState(false);
 
   const provider = (providerData || user) as ServiceProvider;
   const isProfileComplete = provider && 
@@ -351,7 +352,8 @@ export default function ProviderDashboard() {
 
         {/* Navigation Tabs */}
         <div className="mb-8">
-          <div className="border-b border-slate-700">
+          {/* Desktop Navigation */}
+          <div className="hidden md:block border-b border-slate-700">
             <nav className="-mb-px flex space-x-8">
               <button
                 onClick={() => setActiveTab('overview')}
@@ -417,6 +419,96 @@ export default function ProviderDashboard() {
                 </div>
               </button>
             </nav>
+          </div>
+
+          {/* Mobile Navigation Dropdown */}
+          <div className="md:hidden">
+            <div className="relative">
+              <button
+                onClick={() => setShowMobileNav(!showMobileNav)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white"
+              >
+                <div className="flex items-center space-x-2">
+                  {activeTab === 'overview' && (
+                    <>
+                      <BarChart3 className="h-4 w-4" />
+                      <span>Overview</span>
+                    </>
+                  )}
+                  {activeTab === 'messages' && (
+                    <>
+                      <div className="relative">
+                        <MessageCircle className="h-4 w-4" />
+                        {unreadCount > 0 && (
+                          <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                          </div>
+                        )}
+                      </div>
+                      <span>Messages</span>
+                      {unreadCount > 0 && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </>
+                  )}
+                  {activeTab === 'coach' && (
+                    <>
+                      <Award className="h-4 w-4" />
+                      <span>AI Coach</span>
+                    </>
+                  )}
+                  {activeTab === 'profile' && (
+                    <>
+                      <Settings className="h-4 w-4" />
+                      <span>Profile Settings</span>
+                    </>
+                  )}
+                </div>
+                <ChevronDown className={`h-4 w-4 transition-transform ${showMobileNav ? 'rotate-180' : ''}`} />
+              </button>
+
+              {showMobileNav && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-10">
+                  <button
+                    onClick={() => { setActiveTab('overview'); setShowMobileNav(false); }}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-slate-700 transition-colors ${activeTab === 'overview' ? 'bg-slate-700 text-[#3db2ff]' : 'text-[#cbd5e1]'}`}
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Overview</span>
+                  </button>
+                  <button
+                    onClick={() => { setActiveTab('messages'); setShowMobileNav(false); }}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-700 transition-colors ${activeTab === 'messages' ? 'bg-slate-700 text-[#3db2ff]' : 'text-[#cbd5e1]'}`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <MessageCircle className="h-4 w-4" />
+                      <span>Messages</span>
+                    </div>
+                    {unreadCount > 0 && (
+                      <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => { setActiveTab('coach'); setShowMobileNav(false); }}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-slate-700 transition-colors ${activeTab === 'coach' ? 'bg-slate-700 text-[#3db2ff]' : 'text-[#cbd5e1]'}`}
+                  >
+                    <Award className="h-4 w-4" />
+                    <span>AI Coach</span>
+                  </button>
+                  <button
+                    onClick={() => { setActiveTab('profile'); setShowMobileNav(false); }}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-slate-700 transition-colors rounded-b-lg ${activeTab === 'profile' ? 'bg-slate-700 text-[#3db2ff]' : 'text-[#cbd5e1]'}`}
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Profile Settings</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
