@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, MapPin, Users, CheckCircle, Star, ArrowRight, Sparkles, Zap, Shield } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import Header from '../components/common/Header';
 import ChatAssistant from '../components/chat/ChatAssistant';
 import Login from '../components/auth/Login';
@@ -13,6 +14,7 @@ interface HomepageProps {
 }
 
 export default function Homepage({ showAuth, onAuthClick, onAuthClose }: HomepageProps) {
+  const { user } = useAuth();
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot'>('login');
   const [showChatAssistant, setShowChatAssistant] = useState(false);
 
@@ -44,6 +46,25 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
     'Gardening', 'Painting', 'Auto Repair', 'IT Support', 'Tutoring'
   ];
 
+  const handleServiceClick = (service: string) => {
+    if (user) {
+      // User is logged in, they'll be redirected to dashboard automatically
+      // The App component handles this redirect
+      return;
+    } else {
+      // User is not logged in, show auth modal
+      onAuthClick();
+    }
+  };
+
+  const handleLogoClick = () => {
+    if (showAuth) {
+      onAuthClose();
+    }
+    // If already on homepage, scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const stats = [
     { number: '10K+', label: 'Happy Customers' },
     { number: '500+', label: 'Service Providers' },
@@ -54,7 +75,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
   if (showAuth) {
     return (
       <div className="min-h-screen bg-[#0d182c] flex flex-col">
-        <Header onAuthClick={onAuthClick} />
+        <Header onAuthClick={onAuthClick} onLogoClick={handleLogoClick} />
         <div className="flex-1 flex items-center justify-center p-4 pt-20">
           <div className="w-full max-w-md">
             <button
@@ -94,7 +115,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
 
   return (
     <>
-      <Header onAuthClick={onAuthClick} />
+      <Header onAuthClick={onAuthClick} onLogoClick={handleLogoClick} />
       
       {/* Modern Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -187,6 +208,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
               {serviceTypes.map((service, index) => (
                 <div
                   key={service}
+                  onClick={() => handleServiceClick(service)}
                   className="group bg-white/5 backdrop-blur-sm border border-white/10 hover:border-[#3db2ff]/50 text-[#cbd5e1] hover:text-white px-4 py-3 rounded-xl text-sm transition-all duration-300 hover:bg-white/10 hover:scale-105 cursor-pointer"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >

@@ -43,7 +43,7 @@ function AppContent() {
   if (user) {
     return (
       <div className="min-h-screen bg-[#0d182c] flex flex-col">
-        <Header onAuthClick={handleAuthClick} />
+        <Header onAuthClick={handleAuthClick} onLogoClick={() => {}} />
         
         <div className="flex-1">
           <ProtectedRoute>
