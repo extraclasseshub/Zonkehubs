@@ -352,71 +352,51 @@ export default function ProviderDashboard() {
         {/* Navigation Tabs */}
         <div className="mb-8">
           <div className="border-b border-slate-700">
-            <nav className="-mb-px flex flex-col sm:flex-row sm:space-x-8 space-y-2 sm:space-y-0">
+            <div className="flex justify-center">
               <button
-                onClick={() => setActiveTab('overview')}
-                className={`py-3 px-4 sm:py-2 sm:px-1 border-b-2 font-medium text-sm transition-colors rounded-t-lg sm:rounded-none ${
-                  activeTab === 'overview'
-                    ? 'border-[#3db2ff] text-[#3db2ff]'
-                    : 'border-transparent text-[#cbd5e1] hover:text-white hover:border-slate-500'
-                }`}
+                onClick={() => {
+                  const tabs: ('overview' | 'messages' | 'coach' | 'profile')[] = ['overview', 'messages', 'coach', 'profile'];
+                  const currentIndex = tabs.indexOf(activeTab);
+                  const nextIndex = (currentIndex + 1) % tabs.length;
+                  setActiveTab(tabs[nextIndex]);
+                }}
+                className="py-4 px-8 bg-gradient-to-r from-[#3db2ff] to-[#00c9a7] hover:from-[#2563eb] hover:to-[#059669] text-white rounded-lg transition-all transform hover:scale-105 shadow-lg flex items-center space-x-3"
               >
-                <div className="flex items-center space-x-2">
-                  <BarChart3 className="h-4 w-4" />
-                  <span>Overview</span>
-                </div>
+                {activeTab === 'overview' && (
+                  <>
+                    <BarChart3 className="h-5 w-5" />
+                    <span className="font-medium">Overview</span>
+                    <span className="text-white/70 text-sm">→ Messages</span>
+                  </>
+                )}
+                {activeTab === 'messages' && (
+                  <>
+                    <MessageCircle className="h-5 w-5" />
+                    <span className="font-medium">Messages</span>
+                    {unreadCount > 0 && (
+                      <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+                        {unreadCount}
+                      </div>
+                    )}
+                    <span className="text-white/70 text-sm">→ AI Coach</span>
+                  </>
+                )}
+                {activeTab === 'coach' && (
+                  <>
+                    <Award className="h-5 w-5" />
+                    <span className="font-medium">AI Coach</span>
+                    <span className="text-white/70 text-sm">→ Profile</span>
+                  </>
+                )}
+                {activeTab === 'profile' && (
+                  <>
+                    <Settings className="h-5 w-5" />
+                    <span className="font-medium">Profile Settings</span>
+                    <span className="text-white/70 text-sm">→ Overview</span>
+                  </>
+                )}
               </button>
-              
-              <button
-                onClick={() => setActiveTab('messages')}
-                className={`py-3 px-4 sm:py-2 sm:px-1 border-b-2 font-medium text-sm transition-colors rounded-t-lg sm:rounded-none relative ${
-                  activeTab === 'messages'
-                    ? 'border-[#3db2ff] text-[#3db2ff]'
-                    : 'border-transparent text-[#cbd5e1] hover:text-white hover:border-slate-500'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <div className="relative">
-                    <MessageCircle className="h-4 w-4" />
-                   
-                  </div>
-                  <span>Messages</span>
-                  {unreadCount > 0 && (
-                    <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
-                      {unreadCount}
-                    </div>
-                  )}
-                </div>
-              </button>
-              
-              <button
-                onClick={() => setActiveTab('coach')}
-                className={`py-3 px-4 sm:py-2 sm:px-1 border-b-2 font-medium text-sm transition-colors rounded-t-lg sm:rounded-none ${
-                  activeTab === 'coach'
-                    ? 'border-[#3db2ff] text-[#3db2ff]'
-                    : 'border-transparent text-[#cbd5e1] hover:text-white hover:border-slate-500'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <Award className="h-4 w-4" />
-                  <span>AI Coach</span>
-                </div>
-              </button>
-              
-              <button
-                onClick={() => setActiveTab('profile')}
-                className={`py-3 px-4 sm:py-2 sm:px-1 border-b-2 font-medium text-sm transition-colors rounded-t-lg sm:rounded-none ${
-                  activeTab === 'profile'
-                    ? 'border-[#3db2ff] text-[#3db2ff]'
-                    : 'border-transparent text-[#cbd5e1] hover:text-white hover:border-slate-500'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <Settings className="h-4 w-4" />
-                  <span>Profile Settings</span>
-                </div>
-              </button>
-            </nav>
+            </div>
           </div>
         </div>
 

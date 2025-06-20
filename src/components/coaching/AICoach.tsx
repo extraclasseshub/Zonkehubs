@@ -274,12 +274,6 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -323,7 +317,11 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
       <div className="border-b border-slate-700">
         <nav className="flex flex-col sm:flex-row">
           <button
-            onClick={() => setActiveTab('chat')}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setActiveTab('chat');
+            }}
             className={`flex-1 py-3 px-4 sm:py-4 sm:px-6 text-center font-medium transition-colors ${
               activeTab === 'chat'
                 ? 'bg-slate-700 text-[#3db2ff] border-b-2 border-[#3db2ff]'
@@ -336,7 +334,11 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
             </div>
           </button>
           <button
-            onClick={() => setActiveTab('insights')}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setActiveTab('insights');
+            }}
             className={`flex-1 py-3 px-4 sm:py-4 sm:px-6 text-center font-medium transition-colors ${
               activeTab === 'insights'
                 ? 'bg-slate-700 text-[#3db2ff] border-b-2 border-[#3db2ff]'
@@ -349,7 +351,11 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
             </div>
           </button>
           <button
-            onClick={() => setActiveTab('goals')}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setActiveTab('goals');
+            }}
             className={`flex-1 py-3 px-4 sm:py-4 sm:px-6 text-center font-medium transition-colors ${
               activeTab === 'goals'
                 ? 'bg-slate-700 text-[#3db2ff] border-b-2 border-[#3db2ff]'
@@ -438,18 +444,29 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
 
             {/* Input */}
             <div className="p-4 border-t border-slate-700">
-              <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex space-x-3">
+              <div className="flex space-x-3">
                 <input
                   type="text"
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSendMessage();
+                    }
+                  }}
                   placeholder="Ask your AI coach anything about growing your business..."
                   className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none"
                   disabled={isTyping}
                 />
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSendMessage();
+                  }}
                   disabled={!inputMessage.trim() || isTyping}
                   className="bg-gradient-to-r from-[#3db2ff] to-[#00c9a7] hover:from-[#2563eb] hover:to-[#059669] disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 disabled:scale-100 shadow-lg flex items-center justify-center"
                 >
@@ -459,7 +476,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
                     <Send className="h-5 w-5" />
                   )}
                 </button>
-              </form>
+              </div>
               
               {/* Quick suggestions */}
               <div className="mt-3 flex flex-wrap gap-2 overflow-x-auto">
@@ -471,7 +488,11 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
                 ].map((suggestion) => (
                   <button
                     key={suggestion}
-                    onClick={() => setInputMessage(suggestion)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setInputMessage(suggestion);
+                    }}
                     className="text-xs bg-slate-700 hover:bg-slate-600 text-[#cbd5e1] px-3 py-1 rounded-full transition-colors"
                     disabled={isTyping}
                   >
