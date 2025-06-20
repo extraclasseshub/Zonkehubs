@@ -121,35 +121,64 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0">
-          {/* 3D-Inspired Animated Background */}
-          <div 
-            className="absolute inset-0 bg-gradient-to-br from-[#0a0f1c] via-[#1a2332] to-[#0d1421]"
-          />
-          
-          {/* Animated Earth Globe - Single Centered Effect */}
-          <div className="absolute inset-0 overflow-hidden">
-            {/* Main Earth Globe */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-gradient-to-r from-[#1e40af]/40 via-[#0ea5e9]/50 to-[#06b6d4]/40 animate-earth-rotation"></div>
-            
-            {/* Earth Texture Overlay */}
+          {/* Animated World Map Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0a0f1c] via-[#1a2332] to-[#0d1421]">
+            {/* World Map SVG Pattern */}
             <div 
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full opacity-70 bg-cover bg-center bg-no-repeat mix-blend-overlay animate-earth-texture-drift"
+              className="absolute inset-0 opacity-20 animate-map-drift"
               style={{
-                backgroundImage: `url('https://images.pexels.com/photos/87651/earth-blue-planet-globe-planet-87651.jpeg?auto=compress&cs=tinysrgb&w=800&h=800&fit=crop')`,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cpath d='M200 100 L250 80 L300 120 L350 90 L400 110 L450 85 L500 105 L550 95 L600 115 L650 100 L700 125 L750 110 L800 130 L850 115 L900 135 L950 120 L1000 140 L1050 125 L1100 145' stroke='%233db2ff' stroke-width='2' fill='none' opacity='0.6'/%3E%3Cpath d='M150 200 L200 180 L250 220 L300 190 L350 210 L400 185 L450 205 L500 195 L550 215 L600 200 L650 225 L700 210 L750 230 L800 215 L850 235 L900 220 L950 240 L1000 225 L1050 245' stroke='%2300c9a7' stroke-width='2' fill='none' opacity='0.5'/%3E%3Cpath d='M100 300 L150 280 L200 320 L250 290 L300 310 L350 285 L400 305 L450 295 L500 315 L550 300 L600 325 L650 310 L700 330 L750 315 L800 335 L850 320 L900 340 L950 325 L1000 345 L1050 330 L1100 350' stroke='%2387ceeb' stroke-width='2' fill='none' opacity='0.4'/%3E%3Cpath d='M50 400 L100 380 L150 420 L200 390 L250 410 L300 385 L350 405 L400 395 L450 415 L500 400 L550 425 L600 410 L650 430 L700 415 L750 435 L800 420 L850 440 L900 425 L950 445 L1000 430 L1050 450 L1100 435' stroke='%236366f1' stroke-width='2' fill='none' opacity='0.3'/%3E%3C/svg%3E")`,
+                backgroundSize: '100% 100%',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center'
               }}
             />
             
-            {/* Light Blue Companion Element */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 translate-x-[300px] w-[200px] h-[200px] rounded-full bg-gradient-to-r from-[#87ceeb]/30 via-[#87ceeb]/40 to-[#add8e6]/30 animate-companion-orbit"></div>
+            {/* Animated Connection Lines */}
+            <div className="absolute inset-0">
+              {/* Horizontal flowing lines */}
+              <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#3db2ff]/60 to-transparent animate-flow-horizontal"></div>
+              <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#00c9a7]/60 to-transparent animate-flow-horizontal-delayed"></div>
+              <div className="absolute top-3/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#87ceeb]/60 to-transparent animate-flow-horizontal-slow"></div>
+              
+              {/* Vertical flowing lines */}
+              <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-[#3db2ff]/40 to-transparent animate-flow-vertical"></div>
+              <div className="absolute top-0 left-1/2 w-px h-full bg-gradient-to-b from-transparent via-[#00c9a7]/40 to-transparent animate-flow-vertical-delayed"></div>
+              <div className="absolute top-0 left-3/4 w-px h-full bg-gradient-to-b from-transparent via-[#87ceeb]/40 to-transparent animate-flow-vertical-slow"></div>
+            </div>
+            
+            {/* Animated Location Pins */}
+            <div className="absolute inset-0">
+              <div className="absolute top-1/4 left-1/5 w-3 h-3 bg-[#3db2ff] rounded-full animate-pulse-glow shadow-lg shadow-[#3db2ff]/50"></div>
+              <div className="absolute top-1/3 left-2/3 w-2 h-2 bg-[#00c9a7] rounded-full animate-pulse-glow-delayed shadow-lg shadow-[#00c9a7]/50"></div>
+              <div className="absolute top-2/3 left-1/3 w-2.5 h-2.5 bg-[#87ceeb] rounded-full animate-pulse-glow-slow shadow-lg shadow-[#87ceeb]/50"></div>
+              <div className="absolute top-1/2 left-4/5 w-2 h-2 bg-[#6366f1] rounded-full animate-pulse-glow shadow-lg shadow-[#6366f1]/50"></div>
+              <div className="absolute top-3/4 left-1/6 w-3 h-3 bg-[#f59e0b] rounded-full animate-pulse-glow-delayed shadow-lg shadow-[#f59e0b]/50"></div>
+              <div className="absolute top-1/5 left-3/4 w-2 h-2 bg-[#ef4444] rounded-full animate-pulse-glow-slow shadow-lg shadow-[#ef4444]/50"></div>
+            </div>
+            
+            {/* Floating Data Particles */}
+            <div className="absolute inset-0">
+              <div className="absolute top-20 left-20 w-1 h-1 bg-[#3db2ff] rounded-full animate-float-particle opacity-80"></div>
+              <div className="absolute top-40 right-32 w-1 h-1 bg-[#00c9a7] rounded-full animate-float-particle-delayed opacity-70"></div>
+              <div className="absolute bottom-32 left-1/3 w-1 h-1 bg-[#87ceeb] rounded-full animate-float-particle-slow opacity-60"></div>
+              <div className="absolute top-60 left-2/3 w-1 h-1 bg-[#6366f1] rounded-full animate-float-particle opacity-75"></div>
+              <div className="absolute bottom-40 right-20 w-1 h-1 bg-[#f59e0b] rounded-full animate-float-particle-delayed opacity-65"></div>
+              <div className="absolute top-1/3 left-1/5 w-1 h-1 bg-[#ef4444] rounded-full animate-float-particle-slow opacity-70"></div>
+            </div>
+            
+            {/* Network Grid Overlay */}
+            <div 
+              className="absolute inset-0 opacity-10 animate-grid-pulse"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%233db2ff' stroke-width='1'%3E%3Cpath d='M0 0L100 100M100 0L0 100'/%3E%3Ccircle cx='50' cy='50' r='30'/%3E%3Ccircle cx='50' cy='50' r='20'/%3E%3Ccircle cx='50' cy='50' r='10'/%3E%3C/g%3E%3C/svg%3E")`,
+                backgroundSize: '100px 100px'
+              }}
+            />
+            
+            {/* Gradient Overlay for Text Readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0d182c]/30 via-transparent to-[#0d182c]/50"></div>
           </div>
-          
-          {/* Additional Floating Orbs */}
-          <div className="absolute top-20 left-10 w-72 h-72 bg-[#3db2ff] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-          <div className="absolute top-40 right-10 w-72 h-72 bg-[#00c9a7] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
-          
-          {/* Grid Pattern */}
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%221%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30"></div>
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
@@ -444,44 +473,160 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
         
         @keyframes earth-rotation {
           from {
-            transform: translate(-50%, -50%) rotate(0deg);
+            background-position: 0% 50%;
           }
           to {
-            transform: translate(-50%, -50%) rotate(360deg);
+            background-position: 100% 50%;
           }
         }
         
-        @keyframes earth-texture-drift {
+        @keyframes map-drift {
           0% {
             background-position: 0% 50%;
           }
           50% {
-            background-position: 100% 50%;
+            background-position: 50% 100%;
           }
           100% {
             background-position: 0% 50%;
           }
         }
         
-        @keyframes companion-orbit {
+        @keyframes flow-horizontal {
           from {
-            transform: translate(-50%, -50%) translate(300px, 0) rotate(0deg);
+            transform: translateX(-100%);
+            opacity: 0;
+          }
+          50% {
+            opacity: 1;
           }
           to {
-            transform: translate(-50%, -50%) translate(300px, 0) rotate(360deg);
+            transform: translateX(100%);
+            opacity: 0;
           }
         }
         
-        .animate-earth-rotation {
-          animation: earth-rotation 20s linear infinite;
+        @keyframes flow-vertical {
+          from {
+            transform: translateY(-100%);
+            opacity: 0;
+          }
+          50% {
+            opacity: 1;
+          }
+          to {
+            transform: translateY(100%);
+            opacity: 0;
+          }
         }
         
-        .animate-earth-texture-drift {
-          animation: earth-texture-drift 45s ease-in-out infinite;
+        @keyframes pulse-glow {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1.5);
+            opacity: 0.7;
+          }
         }
         
-        .animate-companion-orbit {
-          animation: companion-orbit 15s linear infinite;
+        @keyframes float-particle {
+          0%, 100% {
+            transform: translateY(0px) translateX(0px);
+            opacity: 0.8;
+          }
+          33% {
+            transform: translateY(-20px) translateX(10px);
+            opacity: 1;
+          }
+          66% {
+            transform: translateY(10px) translateX(-5px);
+            opacity: 0.6;
+          }
+        }
+        
+        @keyframes grid-pulse {
+          0%, 100% {
+            opacity: 0.1;
+          }
+          50% {
+            opacity: 0.3;
+          }
+        }
+        
+        .animate-map-drift {
+          animation: map-drift 60s ease-in-out infinite;
+        }
+        
+        .animate-flow-horizontal {
+          animation: flow-horizontal 8s linear infinite;
+        }
+        
+        .animate-flow-horizontal-delayed {
+          animation: flow-horizontal 10s linear infinite;
+          animation-delay: 2s;
+        }
+        
+        .animate-flow-horizontal-slow {
+          animation: flow-horizontal 12s linear infinite;
+          animation-delay: 4s;
+        }
+        
+        .animate-flow-vertical {
+          animation: flow-vertical 6s linear infinite;
+        }
+        
+        .animate-flow-vertical-delayed {
+          animation: flow-vertical 8s linear infinite;
+          animation-delay: 1s;
+        }
+        
+        .animate-flow-vertical-slow {
+          animation: flow-vertical 10s linear infinite;
+          animation-delay: 3s;
+        }
+        
+        .animate-pulse-glow {
+          animation: pulse-glow 3s ease-in-out infinite;
+        }
+        
+        .animate-pulse-glow-delayed {
+          animation: pulse-glow 4s ease-in-out infinite;
+          animation-delay: 1s;
+        }
+        
+        .animate-pulse-glow-slow {
+          animation: pulse-glow 5s ease-in-out infinite;
+          animation-delay: 2s;
+        }
+        
+        .animate-float-particle {
+          animation: float-particle 8s ease-in-out infinite;
+        }
+        
+        .animate-float-particle-delayed {
+          animation: float-particle 10s ease-in-out infinite;
+          animation-delay: 2s;
+        }
+        
+        .animate-float-particle-slow {
+          animation: float-particle 12s ease-in-out infinite;
+          animation-delay: 4s;
+        }
+        
+        .animate-grid-pulse {
+          animation: grid-pulse 6s ease-in-out infinite;
+        }
+        
+        .animate-float-particle-ultra {
+          animation: float-particle 14s ease-in-out infinite;
+          animation-delay: 5s;
+        }
+        
+        .animate-float-particle-mega {
+          animation: float-particle 9s ease-in-out infinite;
+          animation-delay: 6s;
         }
       `}</style>
     </>
