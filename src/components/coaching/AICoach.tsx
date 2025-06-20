@@ -429,9 +429,11 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
             <div 
               ref={messagesContainerRef}
               onScroll={handleScroll}
-              maxHeight: 'calc(100vh - 200px)', // Ensure it doesn't exceed viewport
-              scrollBehavior: 'smooth'
-            }}
+              className="flex-1 overflow-y-auto p-4 space-y-4"
+              style={{ 
+                maxHeight: 'calc(100% - 140px)', 
+                scrollBehavior: 'smooth' 
+              }}
             >
               {messages.map((message) => (
                 <div
