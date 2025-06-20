@@ -653,10 +653,6 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
         .animate-reverse-spin {
           animation: reverse-spin 25s linear infinite;
         }
-        
-        .bg-gradient-radial {
-          background: radial-gradient(circle at center, var(--tw-gradient-stops));
-        }
       `}</style>
     </>
   );
