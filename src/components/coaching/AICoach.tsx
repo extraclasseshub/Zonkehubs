@@ -53,6 +53,8 @@ export default function AICoach({ provider }: AICoachProps) {
   const [activeTab, setActiveTab] = useState<'chat' | 'insights' | 'goals'>('chat');
   const [insights, setInsights] = useState<BusinessInsight[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
   // OpenRouter API configuration
   const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
@@ -65,11 +67,30 @@ export default function AICoach({ provider }: AICoachProps) {
   }, [provider]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    // Only auto-scroll if user is near the bottom or if it's a new message from user
+    if (shouldAutoScroll && messagesEndRef.current && messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100;
+      
+      if (isNearBottom || messages.length === 1) {
+        scrollToBottom();
+      }
+    }
+  }, [messages, shouldAutoScroll]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current && messagesContainerRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Handle scroll events to determine if user is manually scrolling
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      const isAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 50;
+      setShouldAutoScroll(isAtBottom);
+    }
   };
 
   const initializeCoach = () => {
@@ -236,6 +257,9 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
+    // Enable auto-scroll when user sends a message
+    setShouldAutoScroll(true);
+
     const userMessage: CoachingMessage = {
       id: Date.now().toString(),
       type: 'user',
@@ -319,7 +343,6 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
           <button
             onClick={(e) => {
               e.preventDefault();
-              e.stopPropagation();
               setActiveTab('chat');
             }}
             className={`flex-1 py-3 px-4 sm:py-4 sm:px-6 text-center font-medium transition-colors ${
@@ -336,7 +359,6 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
           <button
             onClick={(e) => {
               e.preventDefault();
-              e.stopPropagation();
               setActiveTab('insights');
             }}
             className={`flex-1 py-3 px-4 sm:py-4 sm:px-6 text-center font-medium transition-colors ${
@@ -353,7 +375,6 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
           <button
             onClick={(e) => {
               e.preventDefault();
-              e.stopPropagation();
               setActiveTab('goals');
             }}
             className={`flex-1 py-3 px-4 sm:py-4 sm:px-6 text-center font-medium transition-colors ${
@@ -375,7 +396,12 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
         {activeTab === 'chat' && (
           <div className="h-full flex flex-col">
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div 
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto p-4 space-y-4"
+              style={{ height: 'calc(100% - 140px)' }}
+            >
               {messages.map((message) => (
                 <div
                   key={message.id}
@@ -452,7 +478,6 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      e.stopPropagation();
                       handleSendMessage();
                     }
                   }}
@@ -464,7 +489,6 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
                   type="button"
                   onClick={(e) => {
                     e.preventDefault();
-                    e.stopPropagation();
                     handleSendMessage();
                   }}
                   disabled={!inputMessage.trim() || isTyping}
@@ -490,7 +514,6 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
                     key={suggestion}
                     onClick={(e) => {
                       e.preventDefault();
-                      e.stopPropagation();
                       setInputMessage(suggestion);
                     }}
                     className="text-xs bg-slate-700 hover:bg-slate-600 text-[#cbd5e1] px-3 py-1 rounded-full transition-colors"
