@@ -125,7 +125,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           <div className="absolute inset-0 bg-gradient-to-br from-[#0a0f1c] via-[#1a2332] to-[#0d1421]">
             {/* Main Earth covering entire hero */}
             <div 
-              className="absolute inset-0 opacity-60 animate-earth-rotation"
+              className="absolute inset-0 opacity-50 animate-earth-rotation"
               style={{
                 backgroundImage: `url('https://images.pexels.com/photos/87651/earth-blue-planet-globe-planet-87651.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop')`,
                 backgroundSize: 'cover',
