@@ -160,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile load timeout')), 8000)
+        setTimeout(() => reject(new Error('Profile load timeout')), 15000)
       );
 
       const { data: profileData, error: profileError } = await Promise.race([profilePromise, timeoutPromise]) as any;
