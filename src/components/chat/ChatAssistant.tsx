@@ -29,8 +29,8 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
   const [apiError, setApiError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Dappier API configuration
-  const DAPPIER_API_KEY = 'ak_01jy7azf14fe3sf8sh1cjej3d2';
+  // Dappier API configuration - Replace with your actual API key
+  const DAPPIER_API_KEY = process.env.REACT_APP_DAPPIER_API_KEY || '';
   const DAPPIER_API_URL = 'https://api.dappier.com/app/datamodelconversation';
 
   const scrollToBottom = () => {
@@ -41,8 +41,57 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
     scrollToBottom();
   }, [messages]);
 
+  // Fallback responses for common questions about Zonke Hub
+  const getFallbackResponse = (userMessage: string): string => {
+    const message = userMessage.toLowerCase();
+    
+    if (message.includes('how') && (message.includes('work') || message.includes('it work'))) {
+      return "Zonke Hub is simple to use! As a customer, you can search for local service providers by location and service type, view their profiles, ratings, and portfolios, then contact them directly through our platform. Service providers can create profiles, showcase their work, set their service areas, and connect with potential customers. Everything is free to use!";
+    }
+    
+    if (message.includes('free') || message.includes('cost') || message.includes('price')) {
+      return "Yes, Zonke Hub is completely free! There are no fees for customers to search and contact service providers, and no fees for service providers to create profiles and connect with customers. We believe in making local services accessible to everyone.";
+    }
+    
+    if (message.includes('register') || message.includes('sign up') || message.includes('account')) {
+      return "Getting started is easy! Click the 'Sign Up' button and choose whether you're looking for services (User account) or offering services (Provider account). You'll just need to provide basic information like your name, email, and location. Providers can then add details about their services, upload portfolio images, and set their service areas.";
+    }
+    
+    if (message.includes('safe') || message.includes('security') || message.includes('trust')) {
+      return "Your safety is our priority! Zonke Hub features a comprehensive rating and review system so you can see feedback from other customers. All service providers have verified profiles, and our built-in messaging system lets you communicate safely before meeting. We also provide multiple contact options so you can choose how to connect.";
+    }
+    
+    if (message.includes('service') && (message.includes('type') || message.includes('kind') || message.includes('what'))) {
+      return "Zonke Hub connects you with a wide variety of local service providers including: plumbers, electricians, barbers, hair stylists, cleaners, gardeners, handymen, tutors, fitness trainers, photographers, and many more! If you need a local service, chances are you'll find the right professional on our platform.";
+    }
+    
+    if (message.includes('location') || message.includes('area') || message.includes('radius')) {
+      return "Zonke Hub uses location-based matching to connect you with nearby service providers. You can search by your specific location, and service providers can set their preferred work radius. This ensures you find professionals who actually serve your area and can respond quickly to your needs.";
+    }
+    
+    if (message.includes('contact') || message.includes('message') || message.includes('communicate')) {
+      return "You can contact service providers through our secure built-in messaging system, or use the phone and email contact options provided on their profiles. Our messaging system is great for discussing details, sharing photos, and getting quotes before deciding to hire someone.";
+    }
+    
+    if (message.includes('rating') || message.includes('review') || message.includes('feedback')) {
+      return "Our rating system helps you make informed decisions! Customers can rate service providers from 1-5 stars and leave detailed written reviews about their experience. You can see the overall rating, number of reviews, and read specific feedback to help choose the right professional for your needs.";
+    }
+    
+    if (message.includes('provider') && (message.includes('become') || message.includes('join') || message.includes('offer'))) {
+      return "Becoming a service provider on Zonke Hub is free and easy! Sign up for a Provider account, complete your profile with your services, experience, and portfolio images. Set your service area and availability, then start connecting with customers in your area. You'll have access to our messaging system and can build your reputation through customer reviews.";
+    }
+    
+    // Default response for unmatched queries
+    return "Thanks for your question! Zonke Hub is a free platform that connects customers with local service providers across South Africa. You can search for services by location, view provider profiles and ratings, and contact them directly. Whether you need a plumber, electrician, cleaner, or any other local service, we're here to help you find the right professional. Is there something specific you'd like to know more about?";
+  };
+
   // Get response from Dappier API
   const getDappierResponse = async (userMessage: string): Promise<string> => {
+    // If no API key is configured, use fallback responses
+    if (!DAPPIER_API_KEY) {
+      return getFallbackResponse(userMessage);
+    }
+    
     try {
       setApiError(null);
       
@@ -96,8 +145,8 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
       console.error('Dappier API error:', error);
       setApiError(error instanceof Error ? error.message : 'Unknown error occurred');
       
-      // Fallback response
-      return "I'm sorry, I'm having trouble connecting to my knowledge base right now. Please try again in a moment, or feel free to explore Zonke Hub to find local service providers in your area!";
+      // Use fallback response when API fails
+      return getFallbackResponse(userMessage);
     }
   };
 
@@ -287,7 +336,7 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
               <div className="px-3 sm:px-4 py-2 bg-red-900/20 border-t border-red-600">
                 <div className="flex items-center space-x-2 text-red-400 text-xs">
                   <AlertCircle className="h-3 w-3" />
-                  <span>API Connection Issue: {apiError}</span>
+                  <span>Using offline mode - responses may be limited</span>
                 </div>
               </div>
             )}
