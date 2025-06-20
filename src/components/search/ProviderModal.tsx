@@ -5,7 +5,6 @@ import { X, MapPin, Phone, Mail, Star, User, Building, MessageCircle, Loader2, G
 import RatingModal from '../rating/RatingModal';
 import RatingDisplay from '../rating/RatingDisplay';
 import ReviewsList from '../rating/ReviewsList';
-import ImageGallery from '../common/ImageGallery';
 import { supabase } from '../../lib/supabase';
 
 interface ProviderModalProps {
@@ -530,11 +529,16 @@ export default function ProviderModal({ provider: initialProvider, onClose, onSt
                 {provider.workPortfolio && provider.workPortfolio.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-4">Work Portfolio</h3>
-                    <ImageGallery 
-                      images={provider.workPortfolio} 
-                      className="h-64 sm:h-80"
-                      showThumbnails={true}
-                    />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                      {provider.workPortfolio.map((image, index) => (
+                        <img
+                          key={index}
+                          src={image}
+                          alt={`Work ${index + 1}`}
+                          className="w-full h-24 sm:h-32 object-cover rounded-lg hover:scale-105 transition-transform cursor-pointer"
+                        />
+                      ))}
+                    </div>
                   </div>
                 )}
 

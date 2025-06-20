@@ -4,7 +4,6 @@ import ProviderForm from '../profile/ProviderForm';
 import EnhancedMessaging from '../messaging/EnhancedMessaging';
 import { ServiceProvider } from '../../types';
 import { User, MapPin, Phone, Mail, Eye, EyeOff, Edit, CheckCircle, XCircle, Camera, MessageCircle, Settings, BarChart3, Bell, X, Loader2, Globe, Users, Award } from 'lucide-react';
-import ImageGallery from '../common/ImageGallery';
 import { supabase } from '../../lib/supabase';
 
 export default function ProviderDashboard() {
@@ -677,11 +676,16 @@ export default function ProviderDashboard() {
                       <label className="block text-sm font-medium text-[#cbd5e1] mb-2">
                         Work Portfolio ({provider.workPortfolio.length} images)
                       </label>
-                      <ImageGallery 
-                        images={provider.workPortfolio} 
-                        className="h-32"
-                        showThumbnails={true}
-                      />
+                      <div className="grid grid-cols-3 gap-2">
+                        {provider.workPortfolio.slice(0, 6).map((image, index) => (
+                          <img
+                            key={index}
+                            src={image}
+                            alt={`Work ${index + 1}`}
+                            className="w-full h-16 object-cover rounded-md"
+                          />
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
