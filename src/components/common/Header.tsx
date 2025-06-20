@@ -145,11 +145,6 @@ export default function Header({ onAuthClick, onLogoClick }: HeaderProps) {
                 className="focus:outline-none focus:ring-2 focus:ring-[#3db2ff] rounded-md p-1 transition-all hover:scale-105"
               >
                 <img 
-                  src="/logo.png" 
-                  alt="Zonke Hub" 
-                  className="h-[24px] w-auto"
-                />
-              </button>
             </div>
           </div>
 
