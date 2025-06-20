@@ -74,7 +74,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
 
   if (showAuth) {
     return (
-      <div className="min-h-screen bg-[#0d182c] flex flex-col relative overflow-hidden">
+      <div className="min-h-screen bg-[#0d182c] flex flex-col">
         <Header onAuthClick={onAuthClick} onLogoClick={handleLogoClick} />
         <div className="flex-1 flex items-center justify-center p-4 pt-20">
           <div className="w-full max-w-md">
@@ -104,8 +104,23 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           </div>
         </div>
         
-        {/* Full Background Animation for Auth Pages */}
-        <div className="absolute inset-0 z-0">
+        {/* Chat Assistant - Available even during auth */}
+        <ChatAssistant 
+          isOpen={showChatAssistant}
+          onToggle={() => setShowChatAssistant(!showChatAssistant)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Header onAuthClick={onAuthClick} onLogoClick={handleLogoClick} />
+      
+      {/* Modern Hero Section */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Animated Background */}
+        <div className="absolute inset-0">
           {/* 3D-Inspired Animated Background */}
           <div 
             className="absolute inset-0 bg-gradient-to-br from-[#0a0f1c] via-[#1a2332] to-[#0d1421]"
@@ -159,80 +174,6 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           {/* Grid Pattern */}
           <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%221%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30"></div>
         </div>
-        
-        {/* Chat Assistant - Available even during auth */}
-        <div className="relative z-10">
-          <ChatAssistant 
-            isOpen={showChatAssistant}
-            onToggle={() => setShowChatAssistant(!showChatAssistant)}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative overflow-hidden">
-      <Header onAuthClick={onAuthClick} onLogoClick={handleLogoClick} />
-      
-      {/* Full Page Animated Background */}
-      <div className="fixed inset-0 z-0">
-        {/* 3D-Inspired Animated Background */}
-        <div 
-          className="absolute inset-0 bg-gradient-to-br from-[#0a0f1c] via-[#1a2332] to-[#0d1421]"
-        />
-        
-        {/* Animated Globe Effect */}
-        <div className="absolute inset-0 overflow-hidden">
-          {/* Main Earth Globe - Multiple Layers for Depth */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-[#1e40af]/30 via-[#0ea5e9]/40 to-[#06b6d4]/30 animate-earth-rotation blur-2xl"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] rounded-full bg-gradient-to-l from-[#00c9a7]/40 via-[#10b981]/30 to-[#059669]/40 animate-earth-counter-rotation blur-xl"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-[#3db2ff]/50 via-transparent to-[#00c9a7]/50 animate-earth-wobble blur-lg"></div>
-          
-          {/* Atmospheric Layers */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-gradient-to-r from-[#3db2ff]/10 via-transparent to-[#00c9a7]/10 animate-atmosphere-pulse"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-l from-transparent via-[#0ea5e9]/5 to-transparent animate-atmosphere-drift"></div>
-          
-          {/* Orbital Particles - Satellites and Space Debris */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px]">
-            <div className="absolute top-0 left-1/2 w-3 h-3 bg-[#3db2ff] rounded-full animate-orbit opacity-80 shadow-lg shadow-[#3db2ff]/50"></div>
-            <div className="absolute top-1/4 right-0 w-2 h-2 bg-[#00c9a7] rounded-full animate-orbit-reverse opacity-70 shadow-lg shadow-[#00c9a7]/50"></div>
-            <div className="absolute bottom-0 left-1/2 w-2.5 h-2.5 bg-white rounded-full animate-orbit-slow opacity-60 shadow-lg shadow-white/50"></div>
-            <div className="absolute bottom-1/4 left-0 w-1.5 h-1.5 bg-[#06b6d4] rounded-full animate-orbit-fast opacity-90 shadow-lg shadow-[#06b6d4]/50"></div>
-          </div>
-          
-          {/* Floating Space Particles */}
-          <div className="absolute top-20 left-20 w-2 h-2 bg-[#3db2ff] rounded-full animate-float-space opacity-60 shadow-lg shadow-[#3db2ff]/30"></div>
-          <div className="absolute top-40 right-32 w-1 h-1 bg-[#00c9a7] rounded-full animate-float-space-delayed opacity-80 shadow-lg shadow-[#00c9a7]/30"></div>
-          <div className="absolute bottom-32 left-1/4 w-1.5 h-1.5 bg-white rounded-full animate-float-space-slow opacity-40 shadow-lg shadow-white/20"></div>
-          <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-[#3db2ff] rounded-full animate-float-space-fast opacity-70 shadow-lg shadow-[#3db2ff]/30"></div>
-          <div className="absolute bottom-1/4 right-20 w-2 h-2 bg-[#00c9a7] rounded-full animate-float-space opacity-50 shadow-lg shadow-[#00c9a7]/30"></div>
-          <div className="absolute top-60 left-1/3 w-1.5 h-1.5 bg-[#06b6d4] rounded-full animate-float-space-ultra opacity-75 shadow-lg shadow-[#06b6d4]/30"></div>
-          <div className="absolute bottom-60 right-1/3 w-1 h-1 bg-yellow-400 rounded-full animate-float-space-mega opacity-85 shadow-lg shadow-yellow-400/30"></div>
-        </div>
-        
-        {/* Earth-like Texture Overlay */}
-        <div 
-          className="absolute inset-0 opacity-30 bg-cover bg-center bg-no-repeat mix-blend-overlay animate-earth-texture-drift"
-          style={{
-            backgroundImage: `url('https://images.pexels.com/photos/87651/earth-blue-planet-globe-planet-87651.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop')`,
-          }}
-        />
-        
-        {/* Atmospheric Glow */}
-        <div className="absolute inset-0 bg-gradient-radial from-transparent via-[#0d182c]/40 to-[#0d182c]/85 animate-glow-pulse" />
-        
-        {/* Additional Floating Orbs */}
-        <div className="absolute top-20 left-10 w-72 h-72 bg-[#3db2ff] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-        <div className="absolute top-40 right-10 w-72 h-72 bg-[#00c9a7] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
-        
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%221%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30"></div>
-      </div>
-      
-      {/* Modern Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center z-10">
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           {/* Badge */}
@@ -337,7 +278,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
       </section>
 
       {/* Features Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-slate-900/50 backdrop-blur-sm z-10">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-900/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
@@ -363,7 +304,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
       </section>
 
       {/* How It Works Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8 z-10">
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
@@ -432,7 +373,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-slate-900/80 via-slate-800/80 to-slate-900/80 backdrop-blur-sm z-10">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
             Ready to Get Started?
@@ -458,12 +399,10 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
       </section>
 
       {/* Chat Assistant */}
-      <div className="relative z-50">
-        <ChatAssistant 
-          isOpen={showChatAssistant}
-          onToggle={() => setShowChatAssistant(!showChatAssistant)}
-        />
-      </div>
+      <ChatAssistant 
+        isOpen={showChatAssistant}
+        onToggle={() => setShowChatAssistant(!showChatAssistant)}
+      />
 
       <style jsx>{`
         @keyframes blob {
@@ -722,6 +661,6 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           background: radial-gradient(circle at center, var(--tw-gradient-stops));
         }
       `}</style>
-    </div>
+    </>
   );
 }
