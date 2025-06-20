@@ -6,9 +6,11 @@ interface LoginProps {
   onSwitchToRegister: () => void;
   onSwitchToForgotPassword: () => void;
   onClose: () => void;
+  onLoginStart?: () => void;
+  onLoginComplete?: () => void;
 }
 
-export default function Login({ onSwitchToRegister, onSwitchToForgotPassword, onClose }: LoginProps) {
+export default function Login({ onSwitchToRegister, onSwitchToForgotPassword, onClose, onLoginStart, onLoginComplete }: LoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,17 +21,22 @@ export default function Login({ onSwitchToRegister, onSwitchToForgotPassword, on
     e.preventDefault();
     setLoading(true);
     setError('');
+    
+    // Notify parent that login is starting
+    onLoginStart?.();
 
     // Basic validation
     if (!email.trim()) {
       setError('Please enter your email address');
       setLoading(false);
+      onLoginComplete?.();
       return;
     }
 
     if (!password) {
       setError('Please enter your password');
       setLoading(false);
+      onLoginComplete?.();
       return;
     }
 
@@ -38,6 +45,7 @@ export default function Login({ onSwitchToRegister, onSwitchToForgotPassword, on
     if (!emailRegex.test(email.trim())) {
       setError('Please enter a valid email address');
       setLoading(false);
+      onLoginComplete?.();
       return;
     }
 
@@ -46,13 +54,16 @@ export default function Login({ onSwitchToRegister, onSwitchToForgotPassword, on
       const success = await login(email.trim().toLowerCase(), password);
       if (success) {
         console.log('✅ Login successful, closing modal');
-        onClose();
+        // Don't close immediately, let the loading state handle the transition
+        onLoginComplete?.();
       } else {
         setError('Invalid email or password. Please check your credentials and try again.');
+        onLoginComplete?.();
       }
     } catch (err) {
       console.error('❌ Login failed:', err);
       setError('Login failed. Please check your internet connection and try again.');
+      onLoginComplete?.();
     } finally {
       setLoading(false);
     }
