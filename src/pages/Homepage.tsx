@@ -129,15 +129,18 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           {/* Animated Earth Globe - Single Centered Effect */}
           <div className="absolute inset-0 overflow-hidden">
             {/* Main Earth Globe */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-gradient-to-r from-[#1e40af]/40 via-[#0ea5e9]/50 to-[#06b6d4]/40 animate-earth-rotation blur-xl"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-gradient-to-r from-[#1e40af]/40 via-[#0ea5e9]/50 to-[#06b6d4]/40 animate-earth-rotation"></div>
             
             {/* Earth Texture Overlay */}
             <div 
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full opacity-60 bg-cover bg-center bg-no-repeat mix-blend-overlay animate-earth-texture-drift"
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full opacity-70 bg-cover bg-center bg-no-repeat mix-blend-overlay animate-earth-texture-drift"
               style={{
                 backgroundImage: `url('https://images.pexels.com/photos/87651/earth-blue-planet-globe-planet-87651.jpeg?auto=compress&cs=tinysrgb&w=800&h=800&fit=crop')`,
               }}
             />
+            
+            {/* Light Blue Companion Element */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 translate-x-[300px] w-[200px] h-[200px] rounded-full bg-gradient-to-r from-[#87ceeb]/30 via-[#87ceeb]/40 to-[#add8e6]/30 animate-companion-orbit"></div>
           </div>
           
           {/* Additional Floating Orbs */}
@@ -441,13 +444,10 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
         
         @keyframes earth-rotation {
           from {
-            transform: translate(-50%, -50%) rotate(0deg) scale(1);
-          }
-          50% {
-            transform: translate(-50%, -50%) rotate(180deg) scale(1.05);
+            transform: translate(-50%, -50%) rotate(0deg);
           }
           to {
-            transform: translate(-50%, -50%) rotate(360deg) scale(1);
+            transform: translate(-50%, -50%) rotate(360deg);
           }
         }
         
@@ -463,12 +463,25 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           }
         }
         
+        @keyframes companion-orbit {
+          from {
+            transform: translate(-50%, -50%) translate(300px, 0) rotate(0deg);
+          }
+          to {
+            transform: translate(-50%, -50%) translate(300px, 0) rotate(360deg);
+          }
+        }
+        
         .animate-earth-rotation {
-          animation: earth-rotation 30s linear infinite;
+          animation: earth-rotation 20s linear infinite;
         }
         
         .animate-earth-texture-drift {
           animation: earth-texture-drift 45s ease-in-out infinite;
+        }
+        
+        .animate-companion-orbit {
+          animation: companion-orbit 15s linear infinite;
         }
       `}</style>
     </>
