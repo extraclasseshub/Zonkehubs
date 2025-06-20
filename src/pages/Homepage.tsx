@@ -128,28 +128,43 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           
           {/* Animated Globe Effect */}
           <div className="absolute inset-0 overflow-hidden">
-            {/* Rotating Gradient Orbs */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-gradient-to-r from-[#3db2ff]/20 via-[#00c9a7]/20 to-[#3db2ff]/20 animate-spin-slow blur-3xl"></div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-gradient-to-l from-[#00c9a7]/30 via-transparent to-[#3db2ff]/30 animate-reverse-spin blur-2xl"></div>
+            {/* Main Earth Globe - Multiple Layers for Depth */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-[#1e40af]/30 via-[#0ea5e9]/40 to-[#06b6d4]/30 animate-earth-rotation blur-2xl"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] rounded-full bg-gradient-to-l from-[#00c9a7]/40 via-[#10b981]/30 to-[#059669]/40 animate-earth-counter-rotation blur-xl"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-[#3db2ff]/50 via-transparent to-[#00c9a7]/50 animate-earth-wobble blur-lg"></div>
             
-            {/* Floating Particles */}
-            <div className="absolute top-20 left-20 w-2 h-2 bg-[#3db2ff] rounded-full animate-float opacity-60"></div>
-            <div className="absolute top-40 right-32 w-1 h-1 bg-[#00c9a7] rounded-full animate-float-delayed opacity-80"></div>
-            <div className="absolute bottom-32 left-1/4 w-1.5 h-1.5 bg-white rounded-full animate-float-slow opacity-40"></div>
-            <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-[#3db2ff] rounded-full animate-float-fast opacity-70"></div>
-            <div className="absolute bottom-1/4 right-20 w-2 h-2 bg-[#00c9a7] rounded-full animate-float opacity-50"></div>
+            {/* Atmospheric Layers */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-gradient-to-r from-[#3db2ff]/10 via-transparent to-[#00c9a7]/10 animate-atmosphere-pulse"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-l from-transparent via-[#0ea5e9]/5 to-transparent animate-atmosphere-drift"></div>
+            
+            {/* Orbital Particles - Satellites and Space Debris */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px]">
+              <div className="absolute top-0 left-1/2 w-3 h-3 bg-[#3db2ff] rounded-full animate-orbit opacity-80 shadow-lg shadow-[#3db2ff]/50"></div>
+              <div className="absolute top-1/4 right-0 w-2 h-2 bg-[#00c9a7] rounded-full animate-orbit-reverse opacity-70 shadow-lg shadow-[#00c9a7]/50"></div>
+              <div className="absolute bottom-0 left-1/2 w-2.5 h-2.5 bg-white rounded-full animate-orbit-slow opacity-60 shadow-lg shadow-white/50"></div>
+              <div className="absolute bottom-1/4 left-0 w-1.5 h-1.5 bg-[#06b6d4] rounded-full animate-orbit-fast opacity-90 shadow-lg shadow-[#06b6d4]/50"></div>
+            </div>
+            
+            {/* Floating Space Particles */}
+            <div className="absolute top-20 left-20 w-2 h-2 bg-[#3db2ff] rounded-full animate-float-space opacity-60 shadow-lg shadow-[#3db2ff]/30"></div>
+            <div className="absolute top-40 right-32 w-1 h-1 bg-[#00c9a7] rounded-full animate-float-space-delayed opacity-80 shadow-lg shadow-[#00c9a7]/30"></div>
+            <div className="absolute bottom-32 left-1/4 w-1.5 h-1.5 bg-white rounded-full animate-float-space-slow opacity-40 shadow-lg shadow-white/20"></div>
+            <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-[#3db2ff] rounded-full animate-float-space-fast opacity-70 shadow-lg shadow-[#3db2ff]/30"></div>
+            <div className="absolute bottom-1/4 right-20 w-2 h-2 bg-[#00c9a7] rounded-full animate-float-space opacity-50 shadow-lg shadow-[#00c9a7]/30"></div>
+            <div className="absolute top-60 left-1/3 w-1.5 h-1.5 bg-[#06b6d4] rounded-full animate-float-space-ultra opacity-75 shadow-lg shadow-[#06b6d4]/30"></div>
+            <div className="absolute bottom-60 right-1/3 w-1 h-1 bg-yellow-400 rounded-full animate-float-space-mega opacity-85 shadow-lg shadow-yellow-400/30"></div>
           </div>
           
           {/* Earth-like Texture Overlay */}
           <div 
-            className="absolute inset-0 opacity-20 bg-cover bg-center bg-no-repeat mix-blend-overlay"
+            className="absolute inset-0 opacity-30 bg-cover bg-center bg-no-repeat mix-blend-overlay animate-earth-texture-drift"
             style={{
               backgroundImage: `url('https://images.pexels.com/photos/87651/earth-blue-planet-globe-planet-87651.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop')`,
             }}
           />
           
           {/* Atmospheric Glow */}
-          <div className="absolute inset-0 bg-gradient-radial from-transparent via-[#0d182c]/50 to-[#0d182c]/90" />
+          <div className="absolute inset-0 bg-gradient-radial from-transparent via-[#0d182c]/40 to-[#0d182c]/85 animate-glow-pulse" />
           
           {/* Additional Floating Orbs */}
           <div className="absolute top-20 left-10 w-72 h-72 bg-[#3db2ff] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
@@ -450,12 +465,187 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           }
         }
         
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0px) translateX(0px);
+        @keyframes earth-rotation {
+          from {
+            transform: translate(-50%, -50%) rotate(0deg) scale(1);
           }
           50% {
-            transform: translateY(-20px) translateX(10px);
+            transform: translate(-50%, -50%) rotate(180deg) scale(1.05);
+          }
+          to {
+            transform: translate(-50%, -50%) rotate(360deg) scale(1);
+          }
+        }
+        
+        @keyframes earth-counter-rotation {
+          from {
+            transform: translate(-50%, -50%) rotate(360deg) scale(1.02);
+          }
+          50% {
+            transform: translate(-50%, -50%) rotate(180deg) scale(0.98);
+          }
+          to {
+            transform: translate(-50%, -50%) rotate(0deg) scale(1.02);
+          }
+        }
+        
+        @keyframes earth-wobble {
+          0%, 100% {
+            transform: translate(-50%, -50%) rotate(0deg) scale(1);
+          }
+          25% {
+            transform: translate(-50%, -50%) rotate(90deg) scale(1.03);
+          }
+          50% {
+            transform: translate(-50%, -50%) rotate(180deg) scale(0.97);
+          }
+          75% {
+            transform: translate(-50%, -50%) rotate(270deg) scale(1.03);
+          }
+        }
+        
+        @keyframes atmosphere-pulse {
+          0%, 100% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.3;
+          }
+          50% {
+            transform: translate(-50%, -50%) scale(1.1);
+            opacity: 0.6;
+          }
+        }
+        
+        @keyframes atmosphere-drift {
+          0% {
+            transform: translate(-50%, -50%) rotate(0deg);
+          }
+          100% {
+            transform: translate(-50%, -50%) rotate(360deg);
+          }
+        }
+        
+        @keyframes orbit {
+          0% {
+            transform: rotate(0deg) translateX(350px) rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg) translateX(350px) rotate(-360deg);
+          }
+        }
+        
+        @keyframes orbit-reverse {
+          0% {
+            transform: rotate(360deg) translateX(300px) rotate(-360deg);
+          }
+          100% {
+            transform: rotate(0deg) translateX(300px) rotate(0deg);
+          }
+        }
+        
+        @keyframes earth-texture-drift {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+        
+        @keyframes glow-pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.8;
+          }
+        }
+        
+        @keyframes float-space {
+          0%, 100% {
+            transform: translateY(0px) translateX(0px) rotate(0deg);
+          }
+          33% {
+            transform: translateY(-30px) translateX(20px) rotate(120deg);
+          }
+          66% {
+            transform: translateY(10px) translateX(-15px) rotate(240deg);
+          }
+        }
+        
+        .animate-earth-rotation {
+          animation: earth-rotation 30s linear infinite;
+        }
+        
+        .animate-earth-counter-rotation {
+          animation: earth-counter-rotation 25s linear infinite;
+        }
+        
+        .animate-earth-wobble {
+          animation: earth-wobble 40s ease-in-out infinite;
+        }
+        
+        .animate-atmosphere-pulse {
+          animation: atmosphere-pulse 8s ease-in-out infinite;
+        }
+        
+        .animate-atmosphere-drift {
+          animation: atmosphere-drift 60s linear infinite;
+        }
+        
+        .animate-earth-texture-drift {
+          animation: earth-texture-drift 45s ease-in-out infinite;
+        }
+        
+        .animate-glow-pulse {
+          animation: glow-pulse 6s ease-in-out infinite;
+        }
+        
+        .animate-orbit {
+          animation: orbit 20s linear infinite;
+        }
+        
+        .animate-orbit-reverse {
+          animation: orbit-reverse 15s linear infinite;
+        }
+        
+        .animate-orbit-slow {
+          animation: orbit 35s linear infinite;
+        }
+        
+        .animate-orbit-fast {
+          animation: orbit-reverse 10s linear infinite;
+        }
+        
+        .animate-float-space {
+          animation: float-space 8s ease-in-out infinite;
+        }
+        
+        .animate-float-space-delayed {
+          animation: float-space 10s ease-in-out infinite;
+          animation-delay: 2s;
+        }
+        
+        .animate-float-space-slow {
+          animation: float-space 12s ease-in-out infinite;
+          animation-delay: 1s;
+        }
+        
+        .animate-float-space-fast {
+          animation: float-space 6s ease-in-out infinite;
+          animation-delay: 3s;
+        }
+        
+        .animate-float-space-ultra {
+          animation: float-space 14s ease-in-out infinite;
+          animation-delay: 4s;
+        }
+        
+        .animate-float-space-mega {
+          animation: float-space 9s ease-in-out infinite;
+          animation-delay: 5s;
           }
         }
         
@@ -465,25 +655,6 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
         
         .animate-reverse-spin {
           animation: reverse-spin 25s linear infinite;
-        }
-        
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-        
-        .animate-float-delayed {
-          animation: float 8s ease-in-out infinite;
-          animation-delay: 2s;
-        }
-        
-        .animate-float-slow {
-          animation: float 10s ease-in-out infinite;
-          animation-delay: 1s;
-        }
-        
-        .animate-float-fast {
-          animation: float 4s ease-in-out infinite;
-          animation-delay: 3s;
         }
         
         .bg-gradient-radial {
