@@ -276,20 +276,26 @@ export default function ServiceCard({ provider, onChatStart }: ServiceCardProps)
           ) : (
             <a
               href={`mailto:${provider.email}`}
-            <div className="flex items-center space-x-2 text-sm text-[#cbd5e1]">
-              {provider.businessType === 'business' ? (
-                <Building className="h-4 w-4" />
-              ) : (
-                <User className="h-4 w-4" />
-              )}
-              <span className="capitalize">{provider.businessType}</span>
-              {provider.yearsExperience && provider.yearsExperience > 0 && (
-                <>
-                  <span>•</span>
-                  <span>{provider.yearsExperience} years exp.</span>
-                </>
-              )}
-            </div>
+              className="flex items-center justify-center space-x-1 bg-[#00c9a7] hover:bg-teal-500 text-white px-3 py-2 rounded-md transition-colors text-sm"
+            >
+              <Mail className="h-4 w-4" />
+              <span>Email</span>
+            </a>
+          )}
+        </div>
+
+        <div className="flex items-center space-x-2 text-sm text-[#cbd5e1]">
+          {provider.businessType === 'business' ? (
+            <Building className="h-4 w-4" />
+          ) : (
+            <User className="h-4 w-4" />
+          )}
+          <span className="capitalize">{provider.businessType}</span>
+          {provider.yearsExperience && provider.yearsExperience > 0 && (
+            <>
+              <span>•</span>
+              <span>{provider.yearsExperience} years exp.</span>
+            </>
           )}
         </div>
       </div>
