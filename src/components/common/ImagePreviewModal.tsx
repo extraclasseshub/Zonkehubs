@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, Download, ZoomIn, ZoomOut } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Download, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 
 interface ImagePreviewModalProps {
   images: string[];
@@ -17,6 +17,7 @@ export default function ImagePreviewModal({
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isZoomed, setIsZoomed] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [rotation, setRotation] = useState(0);
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -38,6 +39,10 @@ export default function ImagePreviewModal({
         case '-':
           setIsZoomed(false);
           break;
+        case 'r':
+        case 'R':
+          setRotation(prev => (prev + 90) % 360);
+          break;
       }
     };
 
@@ -57,12 +62,14 @@ export default function ImagePreviewModal({
     setImageLoading(true);
     setCurrentIndex((prev) => (prev + 1) % images.length);
     setIsZoomed(false);
+    setRotation(0);
   };
 
   const goToPrevious = () => {
     setImageLoading(true);
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
     setIsZoomed(false);
+    setRotation(0);
   };
 
   const handleImageLoad = () => {
@@ -87,23 +94,43 @@ export default function ImagePreviewModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-50">
+      {/* Animated Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#3db2ff]/20 via-transparent to-[#00c9a7]/20"></div>
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.02%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%221%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
+      </div>
+
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 to-transparent p-4 sm:p-6">
-        <div className="flex items-center justify-between">
+      <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/90 via-black/60 to-transparent backdrop-blur-md">
+        <div className="flex items-center justify-between p-4 sm:p-6">
           <div className="flex items-center space-x-4">
-            <h2 className="text-white text-lg sm:text-xl font-semibold">{title}</h2>
-            <span className="text-white/70 text-sm">
-              {currentIndex + 1} of {images.length}
-            </span>
+            <div className="bg-gradient-to-r from-[#3db2ff] to-[#00c9a7] rounded-lg p-2">
+              <div className="w-6 h-6 bg-white/20 rounded backdrop-blur-sm"></div>
+            </div>
+            <div>
+              <h2 className="text-white text-lg sm:text-xl font-semibold">{title}</h2>
+              <span className="text-white/70 text-sm">
+                {currentIndex + 1} of {images.length}
+              </span>
+            </div>
           </div>
           
           <div className="flex items-center space-x-2">
+            {/* Rotate Button */}
+            <button
+              onClick={() => setRotation(prev => (prev + 90) % 360)}
+              className="p-2.5 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all backdrop-blur-sm border border-white/10 hover:border-white/20"
+              title="Rotate image (R)"
+            >
+              <RotateCw className="h-5 w-5" />
+            </button>
+            
             {/* Zoom Controls */}
             <button
               onClick={() => setIsZoomed(!isZoomed)}
-              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all"
-              title={isZoomed ? "Zoom out" : "Zoom in"}
+              className="p-2.5 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all backdrop-blur-sm border border-white/10 hover:border-white/20"
+              title={isZoomed ? "Zoom out (-)" : "Zoom in (+)"}
             >
               {isZoomed ? <ZoomOut className="h-5 w-5" /> : <ZoomIn className="h-5 w-5" />}
             </button>
@@ -111,7 +138,7 @@ export default function ImagePreviewModal({
             {/* Download Button */}
             <button
               onClick={handleDownload}
-              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all"
+              className="p-2.5 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all backdrop-blur-sm border border-white/10 hover:border-white/20"
               title="Download image"
             >
               <Download className="h-5 w-5" />
@@ -120,7 +147,7 @@ export default function ImagePreviewModal({
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all"
+              className="p-2.5 text-white/80 hover:text-white hover:bg-red-500/20 rounded-xl transition-all backdrop-blur-sm border border-white/10 hover:border-red-500/30"
               title="Close (Esc)"
             >
               <X className="h-6 w-6" />
@@ -129,56 +156,70 @@ export default function ImagePreviewModal({
         </div>
       </div>
 
-      {/* Navigation Arrows */}
+      {/* Modern Navigation Chevrons */}
       {images.length > 1 && (
         <>
           <button
             onClick={goToPrevious}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 p-3 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all backdrop-blur-sm"
+            className="absolute left-6 top-1/2 transform -translate-y-1/2 z-20 group"
             title="Previous image (←)"
           >
-            <ChevronLeft className="h-8 w-8" />
+            <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-4 transition-all duration-300 group-hover:bg-black/60 group-hover:border-white/40 group-hover:scale-110 group-active:scale-95">
+              <ChevronLeft className="h-8 w-8 text-white group-hover:text-[#3db2ff] transition-colors" />
+            </div>
           </button>
           
           <button
             onClick={goToNext}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 p-3 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all backdrop-blur-sm"
+            className="absolute right-6 top-1/2 transform -translate-y-1/2 z-20 group"
             title="Next image (→)"
           >
-            <ChevronRight className="h-8 w-8" />
+            <div className="bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl p-4 transition-all duration-300 group-hover:bg-black/60 group-hover:border-white/40 group-hover:scale-110 group-active:scale-95">
+              <ChevronRight className="h-8 w-8 text-white group-hover:text-[#00c9a7] transition-colors" />
+            </div>
           </button>
         </>
       )}
 
       {/* Main Image Container */}
-      <div className="relative w-full h-full flex items-center justify-center p-4 sm:p-16">
+      <div className="relative w-full h-full flex items-center justify-center p-4 sm:p-20">
         {/* Loading Spinner */}
         {imageLoading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-white/20"></div>
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-t-[#3db2ff] border-r-[#00c9a7] absolute top-0 left-0"></div>
+            </div>
           </div>
         )}
         
         {/* Main Image */}
-        <img
-          src={images[currentIndex]}
-          alt={`Portfolio image ${currentIndex + 1}`}
-          onLoad={handleImageLoad}
-          className={`
-            max-w-full max-h-full object-contain transition-all duration-300 cursor-pointer
-            ${isZoomed ? 'scale-150 cursor-grab active:cursor-grabbing' : 'hover:scale-105'}
-            ${imageLoading ? 'opacity-0' : 'opacity-100'}
-          `}
-          onClick={() => setIsZoomed(!isZoomed)}
-          draggable={false}
-        />
+        <div className="relative max-w-full max-h-full">
+          <img
+            src={images[currentIndex]}
+            alt={`Portfolio image ${currentIndex + 1}`}
+            onLoad={handleImageLoad}
+            className={`
+              max-w-full max-h-full object-contain transition-all duration-500 cursor-pointer
+              shadow-2xl rounded-lg
+              ${isZoomed ? 'scale-150 cursor-grab active:cursor-grabbing' : 'hover:scale-105'}
+              ${imageLoading ? 'opacity-0' : 'opacity-100'}
+            `}
+            style={{ 
+              transform: `rotate(${rotation}deg) ${isZoomed ? 'scale(1.5)' : 'scale(1)'}`,
+              filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.5))'
+            }}
+            onClick={() => setIsZoomed(!isZoomed)}
+            draggable={false}
+          />
+        </div>
       </div>
 
-      {/* Thumbnail Strip */}
+      {/* Modern Thumbnail Strip */}
       {images.length > 1 && (
-        <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-4 sm:p-6">
-          <div className="flex justify-center">
-            <div className="flex space-x-2 overflow-x-auto max-w-full pb-2">
+        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/90 via-black/60 to-transparent backdrop-blur-md">
+          <div className="flex justify-center p-4 sm:p-6">
+            <div className="flex space-x-3 overflow-x-auto max-w-full pb-2 scrollbar-hide">
               {images.map((image, index) => (
                 <button
                   key={index}
@@ -186,12 +227,13 @@ export default function ImagePreviewModal({
                     setCurrentIndex(index);
                     setImageLoading(true);
                     setIsZoomed(false);
+                    setRotation(0);
                   }}
                   className={`
-                    flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-all
+                    relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden transition-all duration-300
                     ${index === currentIndex 
-                      ? 'border-white shadow-lg scale-110' 
-                      : 'border-white/30 hover:border-white/60 hover:scale-105'
+                      ? 'ring-2 ring-[#3db2ff] shadow-lg shadow-[#3db2ff]/25 scale-110' 
+                      : 'ring-1 ring-white/20 hover:ring-white/40 hover:scale-105'
                     }
                   `}
                 >
@@ -200,6 +242,12 @@ export default function ImagePreviewModal({
                     alt={`Thumbnail ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
+                  {index === currentIndex && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#3db2ff]/20 to-transparent"></div>
+                  )}
+                  <div className="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded backdrop-blur-sm">
+                    {index + 1}
+                  </div>
                 </button>
               ))}
             </div>
@@ -213,10 +261,55 @@ export default function ImagePreviewModal({
         onClick={onClose}
       />
 
-      {/* Keyboard shortcuts hint */}
-      <div className="absolute bottom-4 left-4 text-white/50 text-xs hidden sm:block">
-        <p>Use ← → to navigate • Esc to close • Click image to zoom</p>
+      {/* Modern Keyboard shortcuts hint */}
+      <div className="absolute bottom-4 left-4 text-white/50 text-xs hidden sm:block bg-black/40 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/10">
+        <div className="flex items-center space-x-4">
+          <span className="flex items-center space-x-1">
+            <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-xs">←</kbd>
+            <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-xs">→</kbd>
+            <span>Navigate</span>
+          </span>
+          <span className="flex items-center space-x-1">
+            <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-xs">Esc</kbd>
+            <span>Close</span>
+          </span>
+          <span className="flex items-center space-x-1">
+            <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-xs">R</kbd>
+            <span>Rotate</span>
+          </span>
+        </div>
       </div>
+
+      {/* Progress indicator */}
+      {images.length > 1 && (
+        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-20">
+          <div className="flex space-x-2">
+            {images.map((_, index) => (
+              <div
+                key={index}
+                className={`
+                  h-1 rounded-full transition-all duration-300
+                  ${index === currentIndex 
+                    ? 'w-8 bg-gradient-to-r from-[#3db2ff] to-[#00c9a7]' 
+                    : 'w-2 bg-white/30'
+                  }
+                `}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }
+</parameter>
