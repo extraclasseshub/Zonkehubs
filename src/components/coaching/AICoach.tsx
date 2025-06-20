@@ -50,40 +50,50 @@ export default function AICoach({ provider }: AICoachProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<CoachingMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'insights' | 'goals'>('chat');
   const [insights, setInsights] = useState<BusinessInsight[]>([]);
   const [showMobileDropdown, setShowMobileDropdown] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Initialize with welcome message
-  useEffect(() => {
-    const welcomeMessage: CoachingMessage = {
-      id: '1',
-      type: 'coach',
-      content: `Hello ${provider.businessName || provider.name}! I'm your AI business coach. I'm here to help you grow your ${provider.serviceType} business, improve customer satisfaction, and increase your revenue. What would you like to work on today?`,
-      timestamp: new Date(),
-      category: 'business'
-    };
-    setMessages([welcomeMessage]);
+  // OpenRouter API configuration
+  const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
+  const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-    // Generate initial insights
-    generateInsights();
+  useEffect(() => {
+    // Initialize with welcome message and business insights
+    initializeCoach();
+    generateBusinessInsights();
   }, [provider]);
 
-  // Scroll to bottom when new messages arrive
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
   const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const generateInsights = () => {
-    const mockInsights: BusinessInsight[] = [
+  const initializeCoach = () => {
+    const welcomeMessage: CoachingMessage = {
+      id: '1',
+      type: 'coach',
+      content: `Hello ${provider.name}! I'm your AI Business Coach, here to help you grow your ${provider.serviceType} business. I've analyzed your profile and I'm ready to provide personalized advice on improving your services, attracting more customers, and increasing your revenue. What would you like to work on today?`,
+      timestamp: new Date(),
+      category: 'business',
+      actionItems: [
+        'Review your current business performance',
+        'Optimize your service offerings',
+        'Improve customer satisfaction',
+        'Develop marketing strategies'
+      ]
+    };
+    setMessages([welcomeMessage]);
+  };
+
+  const generateBusinessInsights = () => {
+    const businessInsights: BusinessInsight[] = [
       {
         id: '1',
         title: 'Profile Completion',
@@ -116,9 +126,114 @@ export default function AICoach({ provider }: AICoachProps) {
         icon: Award,
         priority: 'medium',
         actionable: !provider.workPortfolio || provider.workPortfolio.length === 0
+      },
+      {
+        id: '4',
+        title: 'Business Hours',
+        description: provider.availability && Object.keys(provider.availability).length > 0
+          ? 'Your availability schedule is set up for customer convenience'
+          : 'Setting clear business hours helps customers know when to contact you',
+        category: provider.availability && Object.keys(provider.availability).length > 0 ? 'success' : 'opportunity',
+        icon: Calendar,
+        priority: 'medium',
+        actionable: !provider.availability || Object.keys(provider.availability).length === 0
+      },
+      {
+        id: '5',
+        title: 'Market Positioning',
+        description: 'Analyze your competitive advantage and unique value proposition',
+        category: 'opportunity',
+        icon: TrendingUp,
+        priority: 'medium',
+        actionable: true
       }
     ];
-    setInsights(mockInsights);
+
+    setInsights(businessInsights);
+  };
+
+  const getAIResponse = async (userMessage: string): Promise<string> => {
+    try {
+      if (!OPENROUTER_API_KEY) {
+        throw new Error('OpenRouter API key not configured');
+      }
+
+      const systemPrompt = `You are an expert business coach specializing in helping service providers grow their businesses. You're coaching ${provider.name}, who provides ${provider.serviceType} services.
+
+Provider Details:
+- Business Type: ${provider.businessType}
+- Service Type: ${provider.serviceType}
+- Experience: ${provider.yearsExperience || 0} years
+- Rating: ${provider.rating || 0}/5 (${provider.reviewCount || 0} reviews)
+- Published: ${provider.isPublished ? 'Yes' : 'No'}
+- Location: ${provider.location.address}
+- Service Radius: ${provider.workRadius}km
+- Portfolio Items: ${provider.workPortfolio?.length || 0}
+- Specialties: ${provider.specialties?.join(', ') || 'None listed'}
+- Certifications: ${provider.certifications?.join(', ') || 'None listed'}
+
+Provide specific, actionable business advice. Focus on:
+1. Practical strategies for growth
+2. Customer acquisition and retention
+3. Service quality improvement
+4. Pricing optimization
+5. Marketing and online presence
+6. Operational efficiency
+
+Keep responses conversational, encouraging, and under 200 words. Include specific action items when relevant.`;
+
+      const response = await fetch(OPENROUTER_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Zonke Hub AI Coach',
+        },
+        body: JSON.stringify({
+          model: 'openai/gpt-3.5-turbo',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage }
+          ],
+          max_tokens: 300,
+          temperature: 0.7
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`API request failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0].message.content;
+    } catch (error) {
+      console.error('OpenRouter API error:', error);
+      return getFallbackResponse(userMessage);
+    }
+  };
+
+  const getFallbackResponse = (userMessage: string): string => {
+    const message = userMessage.toLowerCase();
+    
+    if (message.includes('customer') || message.includes('client')) {
+      return `Great question about customers! Here are some proven strategies: 1) Follow up within 24 hours of inquiries, 2) Ask satisfied customers for reviews, 3) Offer referral incentives, 4) Maintain consistent communication. Your ${provider.serviceType} business can benefit from building strong customer relationships through excellent service delivery and professional communication.`;
+    }
+    
+    if (message.includes('price') || message.includes('cost') || message.includes('rate')) {
+      return `Pricing strategy is crucial for your ${provider.serviceType} business. Consider: 1) Research competitor rates in ${provider.location.address}, 2) Factor in your ${provider.yearsExperience || 0} years of experience, 3) Include material costs and travel time, 4) Offer package deals for multiple services. Remember, competing on value rather than just price often leads to better long-term success.`;
+    }
+    
+    if (message.includes('market') || message.includes('advertis') || message.includes('promot')) {
+      return `Marketing your ${provider.serviceType} services effectively: 1) Optimize your Zonke Hub profile with clear descriptions and portfolio images, 2) Encourage satisfied customers to leave reviews, 3) Use social media to showcase your work, 4) Network with complementary service providers for referrals. Your ${provider.workRadius}km service area gives you a good local market to focus on.`;
+    }
+    
+    if (message.includes('grow') || message.includes('expand') || message.includes('scale')) {
+      return `To grow your ${provider.serviceType} business: 1) Focus on service quality to generate repeat customers and referrals, 2) Consider expanding your service offerings within your expertise, 3) Build a strong online presence with portfolio examples, 4) Develop systems for efficient scheduling and customer communication. With ${provider.reviewCount || 0} reviews so far, building your reputation should be a priority.`;
+    }
+    
+    return `That's a great question about your ${provider.serviceType} business! Based on your profile, I'd recommend focusing on: 1) Building your online presence and customer reviews, 2) Showcasing your work through portfolio images, 3) Optimizing your service area and availability, 4) Developing competitive pricing strategies. What specific aspect would you like to dive deeper into?`;
   };
 
   const handleSendMessage = async () => {
@@ -127,85 +242,52 @@ export default function AICoach({ provider }: AICoachProps) {
     const userMessage: CoachingMessage = {
       id: Date.now().toString(),
       type: 'user',
-      content: inputMessage,
+      content: inputMessage.trim(),
       timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
-    setIsLoading(true);
+    setIsTyping(true);
 
-    // Simulate AI response with random business advice
-    setTimeout(() => {
+    try {
+      const responseContent = await getAIResponse(userMessage.content);
+      
       const coachResponse: CoachingMessage = {
         id: (Date.now() + 1).toString(),
         type: 'coach',
-        content: generateCoachResponse(inputMessage),
+        content: responseContent,
         timestamp: new Date(),
-        category: 'business',
-        actionItems: generateActionItems()
+        category: 'business'
       };
+
       setMessages(prev => [...prev, coachResponse]);
-      setIsLoading(false);
-    }, 1500);
+    } catch (error) {
+      console.error('Error getting coach response:', error);
+      const errorResponse: CoachingMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'coach',
+        content: "I'm experiencing some technical difficulties, but I'm still here to help! Let me provide some general business advice based on your profile...",
+        timestamp: new Date(),
+        category: 'business'
+      };
+      setMessages(prev => [...prev, errorResponse]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
-  const generateCoachResponse = (userInput: string): string => {
-    const responses = [
-      `Great question about your ${provider.serviceType} business! Based on your current rating of ${provider.rating}/5, I'd recommend focusing on customer retention. Studies show that increasing customer retention by just 5% can increase profits by 25-95%.`,
-      
-      `That's an excellent point! For ${provider.serviceType} services, I suggest implementing a follow-up system. Contact customers 24-48 hours after service completion to ensure satisfaction and encourage reviews.`,
-      
-      `I understand your concern. Let's break this down: Your business in ${provider.location.address} has great potential. Consider expanding your service radius from ${provider.workRadius}km to capture more customers.`,
-      
-      `Excellent thinking! Your ${provider.businessType} approach is smart. To boost visibility, make sure your profile showcases your expertise. ${provider.workPortfolio?.length || 0} portfolio images is a good start, but aim for 10-15 for maximum impact.`,
-      
-      `That's a common challenge for ${provider.serviceType} providers. I recommend setting clear expectations upfront, providing detailed quotes, and always following through on promises. This builds trust and leads to repeat business.`,
-      
-      `Smart question! For your type of business, pricing strategy is crucial. Research competitors in ${provider.location.address}, factor in your ${provider.yearsExperience || 0} years of experience, and don't undervalue your expertise.`,
-      
-      `Good insight! Customer communication is key in the ${provider.serviceType} industry. Respond to inquiries within 2 hours when possible, and always be professional and helpful in your messaging.`,
-      
-      `That's a valuable observation! Building a strong online presence starts with your Zonke Hub profile. Make sure it's complete, professional, and showcases your best work. This is often the first impression potential customers have.`
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
-
-  const generateActionItems = (): string[] => {
-    const actionSets = [
-      [
-        'Update your service descriptions with specific details',
-        'Add 3-5 new portfolio images this week',
-        'Follow up with recent customers for reviews'
-      ],
-      [
-        'Review and optimize your pricing strategy',
-        'Expand your service area by 5km if feasible',
-        'Create a customer follow-up checklist'
-      ],
-      [
-        'Improve response time to under 2 hours',
-        'Add professional certifications to your profile',
-        'Schedule weekly business performance reviews'
-      ],
-      [
-        'Research competitor pricing in your area',
-        'Create templates for common customer inquiries',
-        'Set up a customer feedback collection system'
-      ]
-    ];
-    
-    return actionSets[Math.floor(Math.random() * actionSets.length)];
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'performance': return 'text-blue-400 bg-blue-900/20';
-      case 'opportunity': return 'text-green-400 bg-green-900/20';
-      case 'warning': return 'text-yellow-400 bg-yellow-900/20';
-      case 'success': return 'text-emerald-400 bg-emerald-900/20';
-      default: return 'text-gray-400 bg-gray-900/20';
+      case 'performance': return 'text-blue-400';
+      case 'opportunity': return 'text-green-400';
+      case 'warning': return 'text-yellow-400';
+      case 'success': return 'text-emerald-400';
+      default: return 'text-gray-400';
     }
   };
 
@@ -352,7 +434,6 @@ export default function AICoach({ provider }: AICoachProps) {
                       </div>
                       {message.actionItems && (
                         <div className="mt-3 space-y-1">
-                          <p className="text-xs font-medium opacity-75">Action Items:</p>
                           {message.actionItems.map((item, index) => (
                             <div key={index} className="flex items-center space-x-2 text-xs">
                               <ArrowRight className="h-3 w-3" />
@@ -364,14 +445,14 @@ export default function AICoach({ provider }: AICoachProps) {
                       <div className={`text-xs mt-2 ${
                         message.type === 'user' ? 'text-blue-100' : 'text-gray-400'
                       }`}>
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {formatTime(message.timestamp)}
                       </div>
                     </div>
                   </div>
                 </div>
               ))}
               
-              {isLoading && (
+              {isTyping && (
                 <div className="flex justify-start">
                   <div className="flex items-start space-x-3 max-w-[85%]">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#00c9a7] to-[#3db2ff] flex items-center justify-center flex-shrink-0">
@@ -390,6 +471,16 @@ export default function AICoach({ provider }: AICoachProps) {
               <div ref={messagesEndRef} />
             </div>
 
+            {/* API Error Banner */}
+            {apiError && (
+              <div className="px-4 py-2 bg-red-900/20 border-t border-red-600">
+                <div className="flex items-center space-x-2 text-red-400 text-xs">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>Using offline mode - responses may be limited</span>
+                </div>
+              </div>
+            )}
+
             {/* Input */}
             <div className="p-4 border-t border-slate-700">
               <div className="flex space-x-3">
@@ -397,17 +488,22 @@ export default function AICoach({ provider }: AICoachProps) {
                   type="text"
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
                   placeholder="Ask your AI coach anything about growing your business..."
                   className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:border-[#3db2ff] focus:ring-1 focus:ring-[#3db2ff] focus:outline-none"
-                  disabled={isLoading}
+                  disabled={isTyping}
                 />
                 <button
                   onClick={handleSendMessage}
-                  disabled={!inputMessage.trim() || isLoading}
+                  disabled={!inputMessage.trim() || isTyping}
                   className="bg-gradient-to-r from-[#3db2ff] to-[#00c9a7] hover:from-[#2563eb] hover:to-[#059669] disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 disabled:scale-100 shadow-lg flex items-center justify-center"
                 >
-                  {isLoading ? (
+                  {isTyping ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <Send className="h-5 w-5" />
@@ -419,15 +515,15 @@ export default function AICoach({ provider }: AICoachProps) {
               <div className="mt-3 flex flex-wrap gap-2">
                 {[
                   "How can I get more customers?",
-                  "What should I charge?",
-                  "Improve my profile?",
-                  "Marketing tips?"
+                  "What should I charge for my services?",
+                  "How do I improve my online presence?",
+                  "Tips for better customer service?"
                 ].map((suggestion) => (
                   <button
                     key={suggestion}
                     onClick={() => setInputMessage(suggestion)}
                     className="text-xs bg-slate-700 hover:bg-slate-600 text-[#cbd5e1] px-3 py-1 rounded-full transition-colors"
-                    disabled={isLoading}
+                    disabled={isTyping}
                   >
                     {suggestion}
                   </button>
@@ -449,8 +545,13 @@ export default function AICoach({ provider }: AICoachProps) {
                 <div key={insight.id} className="bg-slate-700 rounded-lg p-4 border border-slate-600">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3 flex-1">
-                      <div className={`p-2 rounded-lg ${getCategoryColor(insight.category)}`}>
-                        <insight.icon className="h-5 w-5" />
+                      <div className={`p-2 rounded-lg ${
+                        insight.category === 'success' ? 'bg-green-500/20' :
+                        insight.category === 'warning' ? 'bg-yellow-500/20' :
+                        insight.category === 'opportunity' ? 'bg-blue-500/20' :
+                        'bg-purple-500/20'
+                      }`}>
+                        <insight.icon className={`h-5 w-5 ${getCategoryColor(insight.category)}`} />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
@@ -522,6 +623,48 @@ export default function AICoach({ provider }: AICoachProps) {
                     <p className="text-xs text-gray-400">Goal: 50 reviews</p>
                   </div>
                 </div>
+
+                <div className="bg-slate-700 rounded-lg p-4">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <Award className="h-5 w-5 text-purple-400" />
+                    <h4 className="font-semibold text-white">Portfolio Showcase</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#cbd5e1]">Portfolio Items</span>
+                      <span className="text-white">{provider.workPortfolio?.length || 0}</span>
+                    </div>
+                    <div className="w-full bg-slate-600 rounded-full h-2">
+                      <div 
+                        className="bg-purple-400 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(((provider.workPortfolio?.length || 0) / 20) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-400">Goal: 20 portfolio images</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-700 rounded-lg p-4">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <TrendingUp className="h-5 w-5 text-green-400" />
+                    <h4 className="font-semibold text-white">Business Growth</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#cbd5e1]">Profile Status</span>
+                      <span className={`text-white ${provider.isPublished ? 'text-green-400' : 'text-yellow-400'}`}>
+                        {provider.isPublished ? 'Published' : 'Draft'}
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-600 rounded-full h-2">
+                      <div 
+                        className="bg-green-400 h-2 rounded-full transition-all duration-300"
+                        style={{ width: provider.isPublished ? '100%' : '50%' }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-400">Goal: Maintain published status</p>
+                  </div>
+                </div>
               </div>
 
               <div className="bg-gradient-to-r from-[#3db2ff]/10 to-[#00c9a7]/10 border border-[#3db2ff]/20 rounded-lg p-4">
@@ -540,6 +683,12 @@ export default function AICoach({ provider }: AICoachProps) {
                     <li className="flex items-center space-x-2">
                       <ArrowRight className="h-3 w-3 text-[#3db2ff]" />
                       <span>Focus on getting your first 5 customer reviews</span>
+                    </li>
+                  )}
+                  {(!provider.workPortfolio || provider.workPortfolio.length < 5) && (
+                    <li className="flex items-center space-x-2">
+                      <ArrowRight className="h-3 w-3 text-[#3db2ff]" />
+                      <span>Add more portfolio images to showcase your work quality</span>
                     </li>
                   )}
                   <li className="flex items-center space-x-2">
