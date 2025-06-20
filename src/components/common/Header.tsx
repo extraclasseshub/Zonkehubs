@@ -129,7 +129,7 @@ export default function Header({ onAuthClick, onLogoClick }: HeaderProps) {
                   onClick={onAuthClick}
                   className="bg-[#3db2ff] hover:bg-blue-500 text-white px-4 py-2 rounded-md transition-colors"
                 >
-                  Login / Register
+                  Connect Now
                 </button>
               )}
             </div>
@@ -237,7 +237,7 @@ export default function Header({ onAuthClick, onLogoClick }: HeaderProps) {
                     }}
                     className="w-full text-left px-3 py-2 bg-[#3db2ff] hover:bg-blue-500 text-white rounded-md transition-colors"
                   >
-                    Login / Register
+                    Connect Now
                   </button>
                 )}
               </div>
