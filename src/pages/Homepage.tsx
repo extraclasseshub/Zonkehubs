@@ -164,7 +164,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
           />
           
           {/* Atmospheric Glow */}
-          <div className="absolute inset-0 bg-gradient-radial from-transparent via-[#0d182c]/10 to-[#0d182c]/30 animate-glow-pulse" />
+          <div className="absolute inset-0 bg-gradient-radial from-transparent via-[#0d182c]/5 to-[#0d182c]/15 animate-glow-pulse" />
           
           {/* Additional Floating Orbs */}
           <div className="absolute top-20 left-10 w-72 h-72 bg-[#3db2ff] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
