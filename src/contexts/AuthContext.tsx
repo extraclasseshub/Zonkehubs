@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, ServiceProvider, AuthContextType, RegisterData, ChatMessage, Rating } from '../types';
-import { supabase, isSupabaseConfigured, testSupabaseConnection } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, testSupabaseConnection, clearAuthData } from '../lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,6 +53,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (error) {
           console.error('❌ Session error:', error);
+          
+          // Check for refresh token errors specifically
+          if (error.message?.includes('refresh_token_not_found') || 
+              error.message?.includes('Invalid Refresh Token')) {
+            console.log('🧹 Detected stale refresh token, clearing auth data and reloading...');
+            
+            // Clear stale authentication data
+            clearAuthData();
+            
+            // Sign out to clear any remaining session state
+            try {
+              await supabase.auth.signOut();
+              console.log('✅ Successfully cleared authentication state');
+            } catch (signOutError) {
+              console.error('❌ Error during sign out:', signOutError);
+            }
+            
+            // Reload the page to start fresh
+            setTimeout(() => {
+              window.location.reload();
+            }, 500);
+            return;
+          }
+          
           if (mounted) {
             setLoading(false);
           }
