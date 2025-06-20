@@ -355,13 +355,13 @@ export default function LegalModal({ type, onClose }: LegalModalProps) {
         {/* Footer */}
         <div className="p-6 border-t border-slate-700 bg-[#0d182c]">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 text-sm text-[#cbd5e1] opacity-80">
+            <div className="flex items-center space-x-2 text-sm text-[#cbd5e1]">
               <HelpCircle className="h-4 w-4" />
               <span>Need help? Contact our support team</span>
             </div>
             <button
               onClick={onClose}
-              className="bg-[#3db2ff] hover:bg-blue-500 text-white px-8 py-3 rounded-md transition-colors font-medium shadow-lg hover:shadow-xl transform hover:scale-105 focus:outline-none"
+              className="bg-[#3db2ff] hover:bg-blue-500 text-white px-6 py-2 rounded-md transition-colors font-medium"
             >
               Close
             </button>
