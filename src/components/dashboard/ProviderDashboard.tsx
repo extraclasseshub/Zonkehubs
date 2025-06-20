@@ -353,7 +353,7 @@ export default function ProviderDashboard() {
         {/* Navigation Tabs */}
         <div className="mb-8">
           {/* Desktop Navigation */}
-          <div className="hidden md:block border-b border-slate-700">
+          <div className="hidden sm:block border-b border-slate-700">
             <nav className="-mb-px flex space-x-8">
               <button
                 onClick={() => setActiveTab('overview')}
@@ -422,7 +422,7 @@ export default function ProviderDashboard() {
           </div>
 
           {/* Mobile Navigation Dropdown */}
-          <div className="md:hidden">
+          <div className="sm:hidden">
             <div className="relative">
               <button
                 onClick={() => setShowMobileNav(!showMobileNav)}

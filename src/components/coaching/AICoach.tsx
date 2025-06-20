@@ -332,14 +332,14 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
 
       {/* Navigation Tabs */}
       <div className="border-b border-slate-700">
-        <nav className="flex flex-col sm:flex-row">
+        <nav className="flex">
           <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               setActiveTab('chat');
             }}
-            className={`flex-1 py-3 px-4 sm:py-4 sm:px-6 text-center font-medium transition-colors ${
+            className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
               activeTab === 'chat'
                 ? 'bg-slate-700 text-[#3db2ff] border-b-2 border-[#3db2ff]'
                 : 'text-[#cbd5e1] hover:text-white hover:bg-slate-700'
@@ -356,7 +356,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
               e.stopPropagation();
               setActiveTab('insights');
             }}
-            className={`flex-1 py-3 px-4 sm:py-4 sm:px-6 text-center font-medium transition-colors ${
+            className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
               activeTab === 'insights'
                 ? 'bg-slate-700 text-[#3db2ff] border-b-2 border-[#3db2ff]'
                 : 'text-[#cbd5e1] hover:text-white hover:bg-slate-700'
@@ -373,7 +373,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
               e.stopPropagation();
               setActiveTab('goals');
             }}
-            className={`flex-1 py-3 px-4 sm:py-4 sm:px-6 text-center font-medium transition-colors ${
+            className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
               activeTab === 'goals'
                 ? 'bg-slate-700 text-[#3db2ff] border-b-2 border-[#3db2ff]'
                 : 'text-[#cbd5e1] hover:text-white hover:bg-slate-700'
@@ -388,7 +388,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
       </div>
 
       {/* Content */}
-      <div className="h-96 overflow-hidden">
+      <div className="h-96 overflow-y-auto">
         {activeTab === 'chat' && (
           <div className="h-full flex flex-col">
             {/* Messages */}
@@ -396,7 +396,6 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
               ref={messagesContainerRef}
               onScroll={handleScroll}
               className="flex-1 overflow-y-auto p-4 space-y-4"
-              style={{ scrollBehavior: 'smooth' }}
             >
               {messages.map((message) => (
                 <div
@@ -487,7 +486,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleSendMessage();
+                    setShouldAutoScroll(true);
                   }}
                   disabled={!inputMessage.trim() || isTyping}
                   className="bg-gradient-to-r from-[#3db2ff] to-[#00c9a7] hover:from-[#2563eb] hover:to-[#059669] disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 disabled:scale-100 shadow-lg flex items-center justify-center"
@@ -528,7 +527,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
         )}
 
         {activeTab === 'insights' && (
-          <div className="h-full overflow-y-auto p-6">
+          <div className="p-6">
             <div className="space-y-4">
               <div className="flex items-center space-x-3 mb-6">
                 <Sparkles className="h-6 w-6 text-[#3db2ff]" />
@@ -570,7 +569,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
         )}
 
         {activeTab === 'goals' && (
-          <div className="h-full overflow-y-auto p-6">
+          <div className="p-6">
             <div className="space-y-6">
               <div className="flex items-center space-x-3 mb-6">
                 <Target className="h-6 w-6 text-[#00c9a7]" />
