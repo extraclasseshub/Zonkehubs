@@ -337,11 +337,12 @@ export default function LegalModal({ type, onClose }: LegalModalProps) {
         <div className="flex items-center justify-between p-6 border-b border-slate-700 bg-[#0d182c]">
           <div className="flex items-center space-x-3">
             {getIcon()}
-            <h2 className="text-2xl font-bold text-white">{getTitle()}</h2>
+            <span className="hidden sm:inline">Need help? Contact our support team</span>
+            <span className="sm:hidden">Need help?</span>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-slate-700 focus:outline-none"
+            className="bg-[#3db2ff] hover:bg-blue-500 text-white px-4 py-2 rounded-md transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
