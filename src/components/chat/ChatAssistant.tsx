@@ -81,18 +81,26 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
       return "Becoming a service provider on Zonke Hub is free and easy! Sign up for a Provider account, complete your profile with your services, experience, and portfolio images. Set your service area and availability, then start connecting with customers in your area. You'll have access to our messaging system and can build your reputation through customer reviews.";
     }
     
+    if (message.includes('help') || message.includes('support') || message.includes('problem')) {
+      return "I'm here to help! You can ask me about how Zonke Hub works, how to find services, how to become a provider, our safety features, pricing, and much more. If you have a specific question about using the platform, feel free to ask and I'll do my best to provide helpful information.";
+    }
+    
+    if (message.includes('thank') || message.includes('thanks')) {
+      return "You're welcome! I'm always here to help you make the most of Zonke Hub. Whether you're looking for services or want to offer your own, feel free to ask if you have any other questions about our platform.";
+    }
+    
     // Default response for unmatched queries
-    return "Thanks for your question! Zonke Hub is a free platform that connects customers with local service providers across South Africa. You can search for services by location, view provider profiles and ratings, and contact them directly. Whether you need a plumber, electrician, cleaner, or any other local service, we're here to help you find the right professional. Is there something specific you'd like to know more about?";
+    return "Thanks for your question! I understand you're looking for information about Zonke Hub. While I may not have a specific answer for that exact question, I can tell you that Zonke Hub is a free platform connecting customers with local service providers across South Africa. You can search for services by location, view provider profiles and ratings, and contact them directly. Is there something specific about finding services, becoming a provider, or using our platform that I can help you with?";
   };
 
   // Get response from Dappier API
   const getOpenRouterResponse = async (userMessage: string): Promise<string> => {
-    // If no API key is configured, use fallback responses
-    if (!OPENROUTER_API_KEY) {
-      return getFallbackResponse(userMessage);
-    }
-    
     try {
+      if (!OPENROUTER_API_KEY) {
+        // Return fallback response immediately if no API key
+        return getFallbackResponse(userMessage);
+      }
+      
       setApiError(null);
       
       const response = await fetch(OPENROUTER_API_URL, {
@@ -147,8 +155,8 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
       console.error('OpenRouter API error:', error);
       setApiError(error instanceof Error ? error.message : 'Unknown error occurred');
       
-      // Use fallback response when API fails
-      return getFallbackResponse(userMessage);
+      // Re-throw error to be handled in handleSendMessage
+      throw error;
     }
   };
 
@@ -180,12 +188,15 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
       setMessages(prev => [...prev, assistantResponse]);
     } catch (error) {
       console.error('Error getting assistant response:', error);
+      
+      // Use fallback response instead of error message to maintain conversation flow
+      const fallbackResponse = getFallbackResponse(userMessage.content);
+      
       const errorResponse: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: "I apologize, but I'm experiencing technical difficulties. Please try again later or explore Zonke Hub to discover local service providers!",
-        timestamp: new Date(),
-        error: true
+        content: fallbackResponse,
+        timestamp: new Date()
       };
       setMessages(prev => [...prev, errorResponse]);
     } finally {
@@ -338,7 +349,7 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
               <div className="px-3 sm:px-4 py-2 bg-red-900/20 border-t border-red-600">
                 <div className="flex items-center space-x-2 text-red-400 text-xs">
                   <AlertCircle className="h-3 w-3" />
-                  <span>Using offline mode - responses may be limited</span>
+                  <span>Using offline mode - I can still help with general questions about Zonke Hub</span>
                 </div>
               </div>
             )}
