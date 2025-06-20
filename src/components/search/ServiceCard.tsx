@@ -4,6 +4,7 @@ import { MapPin, Phone, Mail, Star, User, Building, MessageCircle, Eye, Globe, C
 import ChatModal from '../chat/ChatModal';
 import ProviderModal from './ProviderModal';
 import RatingDisplay from '../rating/RatingDisplay';
+import ImageGallery from '../common/ImageGallery';
 
 interface ServiceCardProps {
   provider: ServiceProvider;
@@ -98,21 +99,11 @@ export default function ServiceCard({ provider, onChatStart }: ServiceCardProps)
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-white mb-1">
                 {provider.businessName || provider.name}
-              </h3>
-              <div className="flex items-center space-x-2 text-sm text-[#cbd5e1]">
-                {provider.businessType === 'business' ? (
-                  <Building className="h-4 w-4" />
-                ) : (
-                  <User className="h-4 w-4" />
-                )}
-                <span className="capitalize">{provider.businessType}</span>
-                {provider.yearsExperience && provider.yearsExperience > 0 && (
-                  <>
-                    <span>•</span>
-                    <span>{provider.yearsExperience} years exp.</span>
-                  </>
-                )}
-              </div>
+              <ImageGallery 
+                images={provider.workPortfolio} 
+                className="h-32"
+                showThumbnails={false}
+              />
             </div>
           </div>
           

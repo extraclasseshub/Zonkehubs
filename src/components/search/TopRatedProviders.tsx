@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ServiceProvider } from '../../types';
 import { Star, MapPin, User, Building, Crown, Award, Loader2, Globe, Clock } from 'lucide-react';
 import RatingDisplay from '../rating/RatingDisplay';
+import ImageGallery from '../common/ImageGallery';
 import { supabase } from '../../lib/supabase';
 
 interface TopRatedProvidersProps {
@@ -410,21 +411,11 @@ export default function TopRatedProviders({ onProviderClick }: TopRatedProviders
               {/* Portfolio Preview */}
               {provider.workPortfolio && provider.workPortfolio.length > 0 && (
                 <div className="mt-4">
-                  <div className="flex space-x-2 overflow-x-auto">
-                    {provider.workPortfolio.slice(0, 3).map((image, imgIndex) => (
-                      <img
-                        key={imgIndex}
-                        src={image}
-                        alt={`Work ${imgIndex + 1}`}
-                        className="w-12 h-12 object-cover rounded-md flex-shrink-0"
-                      />
-                    ))}
-                    {provider.workPortfolio.length > 3 && (
-                      <div className="w-12 h-12 bg-slate-700 rounded-md flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs text-[#cbd5e1]">+{provider.workPortfolio.length - 3}</span>
-                      </div>
-                    )}
-                  </div>
+                  <ImageGallery 
+                    images={provider.workPortfolio} 
+                    className="h-24"
+                    showThumbnails={false}
+                  />
                 </div>
               )}
 
