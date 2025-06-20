@@ -67,10 +67,35 @@ export default function ProviderForm({ initialData, onSubmit, loading }: Provide
   const mapSearchResultsRef = useRef<HTMLDivElement>(null);
 
   const serviceTypes = [
-    'Plumbing', 'Electrical', 'Barbering', 'Cleaning', 'Carpentry',
-    'Gardening', 'Painting', 'Auto Repair', 'IT Support', 'Tutoring',
-    'Pet Services', 'Catering', 'Photography', 'Fitness Training'
-  ];
+  'Plumbing', 'Electrical', 'Barbering', 'Cleaning', 'Carpentry',
+  'Gardening', 'Painting', 'Auto Repair', 'IT Support', 'Tutoring',
+  'Pet Services', 'Catering', 'Photography', 'Fitness Training',
+  'Roofing', 'Tiling', 'Flooring Installation', 'Pest Control',
+  'Welding', 'Glass Repair', 'Locksmiths', 'Air Conditioning / HVAC',
+  'Appliance Repair', 'Handyman Services', 'Waterproofing',
+  'Blinds & Curtains Installation', 'Security Systems / CCTV',
+  'Hairdressing', 'Braiding', 'Nail Technicians', 'Makeup Artists',
+  'Massage Therapists', 'Tailoring / Seamstress', 'Laundry & Dry Cleaning',
+  'Mobile Spa', 'Tattoo Artists', 'Legal Services', 'Paralegals',
+  'Accounting', 'Bookkeeping', 'Business Consulting', 'HR / Recruitment',
+  'Translation & Transcription', 'Digital Marketing', 'Graphic Design',
+  'Web Development', 'Virtual Assistants', 'Notary Services',
+  'Academic Coaching', 'Language Tutoring', 'Music Lessons',
+  'Driving Lessons', 'Career Coaching', 'Life Coaching', 'Coding Lessons',
+  'Moving Services', 'Courier / Delivery', 'Car Wash', 'Vehicle Towing',
+  'Ride-hailing Partner Drivers', 'Shuttle Services', 'DJ Services',
+  'Event Planning', 'Decor & Rentals', 'MC / Host Services', 'Bartending',
+  'Mobile Bar', 'Videography', 'Sound & Lighting', 'Babysitting',
+  'Nannies', 'Elderly Care', 'Special Needs Care', 'Au Pair Services',
+  'Homework Assistants', 'Dog Walking', 'Pet Grooming', 'Pet Sitting',
+  'Pet Training', 'Pool Maintenance', 'Tree Cutting', 'Landscaping',
+  'Borehole Drilling', 'Solar Panel Installation', 'Trash Removal',
+  'Junk Collection', 'Recycling Pickup', 'Shoe Repair', 'Leather Work',
+  'Furniture Upholstery', 'Custom Woodwork', 'Mural Painting',
+  '3D Printing', 'Property Photography', 'Real Estate Agents',
+  'Property Valuers', 'Airbnb Management', 'Rental Property Cleaning'
+];
+
 
   const radiusOptions = [5, 10, 15, 20, 25, 30, 50];
 
