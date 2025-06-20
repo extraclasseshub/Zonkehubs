@@ -162,6 +162,13 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
       id: Date.now().toString(),
       type: 'user',
       content: inputMessage.trim(),
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    setIsTyping(true);
+
     // Get response (always returns a response, never throws)
     const responseContent = await getOpenRouterResponse(userMessage.content);
     
@@ -169,8 +176,7 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
       id: (Date.now() + 1).toString(),
       type: 'assistant',
       content: responseContent,
-      timestamp: new Date(),
-      category: 'business'
+      timestamp: new Date()
     };
 
     setMessages(prev => [...prev, assistantResponse]);
