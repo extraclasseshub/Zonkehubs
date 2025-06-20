@@ -99,6 +99,7 @@ export default function ServiceCard({ provider, onChatStart }: ServiceCardProps)
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-white mb-1">
                 {provider.businessName || provider.name}
+              </h3>
               <ImageGallery 
                 images={provider.workPortfolio} 
                 className="h-32"
