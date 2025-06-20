@@ -11,11 +11,9 @@ interface HomepageProps {
   showAuth: boolean;
   onAuthClick: () => void;
   onAuthClose: () => void;
-  onLoginStart?: () => void;
-  onLoginComplete?: () => void;
 }
 
-export default function Homepage({ showAuth, onAuthClick, onAuthClose, onLoginStart, onLoginComplete }: HomepageProps) {
+export default function Homepage({ showAuth, onAuthClick, onAuthClose }: HomepageProps) {
   const { user } = useAuth();
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot'>('login');
   const [showChatAssistant, setShowChatAssistant] = useState(false);
@@ -92,15 +90,11 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose, onLoginSt
                 onSwitchToRegister={() => setAuthMode('register')}
                 onSwitchToForgotPassword={() => setAuthMode('forgot')}
                 onClose={onAuthClose}
-                onLoginStart={onLoginStart}
-                onLoginComplete={onLoginComplete}
               />
             ) : authMode === 'register' ? (
               <Register 
                 onSwitchToLogin={() => setAuthMode('login')}
                 onClose={onAuthClose}
-                onLoginStart={onLoginStart}
-                onLoginComplete={onLoginComplete}
               />
             ) : (
               <ForgotPassword 

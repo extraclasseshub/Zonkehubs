@@ -5,11 +5,9 @@ import { Mail, Lock, User, UserCheck, Loader2, AlertCircle, CheckCircle } from '
 interface RegisterProps {
   onSwitchToLogin: () => void;
   onClose: () => void;
-  onLoginStart?: () => void;
-  onLoginComplete?: () => void;
 }
 
-export default function Register({ onSwitchToLogin, onClose, onLoginStart, onLoginComplete }: RegisterProps) {
+export default function Register({ onSwitchToLogin, onClose }: RegisterProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',

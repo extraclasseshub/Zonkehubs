@@ -8,6 +8,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
 
   useEffect(() => {
@@ -244,8 +245,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('✅ User profile loaded:', regularUser.name);
         setUser(regularUser);
       }
+      
+      // Clear authenticating state once profile is loaded
+      setIsAuthenticating(false);
     } catch (error) {
       console.error('❌ Error loading user profile:', error);
+      setIsAuthenticating(false);
       // Don't throw the error, just log it and continue
     }
   };
@@ -253,6 +258,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       console.log('🔐 Attempting login for:', email);
+      setIsAuthenticating(true);
 
       if (!isSupabaseConfigured() || !supabase) {
         console.error('❌ Supabase not configured');
@@ -278,18 +284,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('❌ Login error:', error.message);
+        setIsAuthenticating(false);
         return false;
       }
 
       if (!data.user) {
         console.error('❌ No user returned from login');
+        setIsAuthenticating(false);
         return false;
       }
 
       console.log('✅ Login successful for:', data.user.email);
+      // Keep authenticating state true until user profile is loaded
       return true;
     } catch (error) {
       console.error('❌ Login error:', error);
+      setIsAuthenticating(false);
       return false;
     }
   };
@@ -1039,7 +1049,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{ 
       user, 
-      loading,
+      loading: loading || isAuthenticating,
       login, 
       register, 
       logout,

@@ -11,7 +11,6 @@ import { Loader2 } from 'lucide-react';
 function AppContent() {
   const { user, loading } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleAuthClick = () => {
     setShowAuth(true);
@@ -19,29 +18,20 @@ function AppContent() {
 
   const handleAuthClose = () => {
     setShowAuth(false);
-    setIsLoggingIn(false);
   };
 
-  const handleLoginStart = () => {
-    setIsLoggingIn(true);
-  };
-
-  const handleLoginComplete = () => {
-    setIsLoggingIn(false);
-    setShowAuth(false);
-  };
-  // Show loading screen while authentication is being determined
-  if (loading || isLoggingIn) {
+  // Show loading screen while authentication is being determined or during login
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#0d182c] flex flex-col">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3db2ff] mx-auto mb-4"></div>
             <h2 className="text-xl font-semibold text-white mb-2">
-              {isLoggingIn ? 'Logging you in...' : 'Loading Zonke Hub...'}
+              Loading Zonke Hub...
             </h2>
             <p className="text-[#cbd5e1]">
-              {isLoggingIn ? 'Please wait while we authenticate your account' : 'Connecting to your account'}
+              Connecting to your account
             </p>
             <div className="mt-4 text-xs text-gray-400">
               <p>This may take a few seconds on first load</p>
@@ -82,8 +72,6 @@ function AppContent() {
           showAuth={showAuth} 
           onAuthClick={handleAuthClick}
           onAuthClose={handleAuthClose}
-          onLoginStart={handleLoginStart}
-          onLoginComplete={handleLoginComplete}
         />
       </div>
       <Footer />
