@@ -426,7 +426,7 @@ export default function ProviderDashboard() {
             <div className="relative">
               <button
                 onClick={() => setShowMobileNav(!showMobileNav)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white"
               >
                 <div className="flex items-center space-x-2">
                   {activeTab === 'overview' && (
@@ -437,15 +437,20 @@ export default function ProviderDashboard() {
                   )}
                   {activeTab === 'messages' && (
                     <>
-                      <div className="relative flex-shrink-0">
+                      <div className="relative">
                         <MessageCircle className="h-4 w-4" />
                         {unreadCount > 0 && (
-                          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 animate-pulse">
+                          <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
                             {unreadCount > 9 ? '9+' : unreadCount}
                           </div>
                         )}
                       </div>
                       <span>Messages</span>
+                      {unreadCount > 0 && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                          {unreadCount}
+                        </span>
+                      )}
                     </>
                   )}
                   {activeTab === 'coach' && (
@@ -465,84 +470,7 @@ export default function ProviderDashboard() {
               </button>
 
               {showMobileNav && (
-                <>
-                  {/* Backdrop */}
-                  <div 
-                    className="fixed inset-0 bg-black bg-opacity-25 z-40"
-                    onClick={() => setShowMobileNav(false)}
-                  />
-                  
-                  {/* Dropdown Menu */}
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden">
-                    <div className="py-2">
-                      <button
-                        onClick={() => { setActiveTab('overview'); setShowMobileNav(false); }}
-                        className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-slate-700 transition-colors ${
-                          activeTab === 'overview' ? 'bg-slate-700 text-[#3db2ff] border-r-2 border-[#3db2ff]' : 'text-[#cbd5e1]'
-                        }`}
-                      >
-                        <BarChart3 className="h-5 w-5" />
-                        <span className="font-medium">Overview</span>
-                      </button>
-                      
-                      <button
-                        onClick={() => { setActiveTab('messages'); setShowMobileNav(false); }}
-                        className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-700 transition-colors ${
-                          activeTab === 'messages' ? 'bg-slate-700 text-[#3db2ff] border-r-2 border-[#3db2ff]' : 'text-[#cbd5e1]'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="relative">
-                            <MessageCircle className="h-5 w-5" />
-                            {unreadCount > 0 && (
-                              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 animate-pulse">
-                                {unreadCount > 9 ? '9+' : unreadCount}
-                              </div>
-                            )}
-                          </div>
-                          <span className="font-medium">Messages</span>
-                        </div>
-                        {unreadCount > 0 && (
-                          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium animate-pulse">
-                            {unreadCount}
-                          </span>
-                        )}
-                      </button>
-                      
-                      <button
-                        onClick={() => { setActiveTab('coach'); setShowMobileNav(false); }}
-                        className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-slate-700 transition-colors ${
-                          activeTab === 'coach' ? 'bg-slate-700 text-[#3db2ff] border-r-2 border-[#3db2ff]' : 'text-[#cbd5e1]'
-                        }`}
-                      >
-                        <Award className="h-5 w-5" />
-                        <span className="font-medium">AI Coach</span>
-                      </button>
-                      
-                      <button
-                        onClick={() => { setActiveTab('profile'); setShowMobileNav(false); }}
-                        className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-slate-700 transition-colors ${
-                          activeTab === 'profile' ? 'bg-slate-700 text-[#3db2ff] border-r-2 border-[#3db2ff]' : 'text-[#cbd5e1]'
-                        }`}
-                      >
-                        <Settings className="h-5 w-5" />
-                        <span className="font-medium">Profile Settings</span>
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Close mobile nav when clicking outside */}
-        {showMobileNav && (
-          <div 
-            className="fixed inset-0 z-30" 
-            onClick={() => setShowMobileNav(false)}
-          />
-        )}
+                <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-10">
                   <button
                     onClick={() => { setActiveTab('overview'); setShowMobileNav(false); }}
                     className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-slate-700 transition-colors ${activeTab === 'overview' ? 'bg-slate-700 text-[#3db2ff]' : 'text-[#cbd5e1]'}`}
