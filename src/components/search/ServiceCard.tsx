@@ -4,7 +4,6 @@ import { MapPin, Phone, Mail, Star, User, Building, MessageCircle, Eye, Globe, C
 import ChatModal from '../chat/ChatModal';
 import ProviderModal from './ProviderModal';
 import RatingDisplay from '../rating/RatingDisplay';
-import ImageGallery from '../common/ImageGallery';
 
 interface ServiceCardProps {
   provider: ServiceProvider;
@@ -232,6 +231,11 @@ export default function ServiceCard({ provider, onChatStart }: ServiceCardProps)
                   <span className="text-xs text-[#cbd5e1]">+{provider.workPortfolio.length - 3}</span>
                 </div>
               )}
+              {provider.workPortfolio.length > 3 && (
+                <div className="w-16 h-16 bg-slate-700 rounded-md flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs text-[#cbd5e1]">+{provider.workPortfolio.length - 3}</span>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -272,11 +276,20 @@ export default function ServiceCard({ provider, onChatStart }: ServiceCardProps)
           ) : (
             <a
               href={`mailto:${provider.email}`}
-              className="flex items-center justify-center space-x-1 bg-[#00c9a7] hover:bg-teal-500 text-white px-3 py-2 rounded-md transition-colors text-sm"
-            >
-              <Mail className="h-4 w-4" />
-              <span>Email</span>
-            </a>
+            <div className="flex items-center space-x-2 text-sm text-[#cbd5e1]">
+              {provider.businessType === 'business' ? (
+                <Building className="h-4 w-4" />
+              ) : (
+                <User className="h-4 w-4" />
+              )}
+              <span className="capitalize">{provider.businessType}</span>
+              {provider.yearsExperience && provider.yearsExperience > 0 && (
+                <>
+                  <span>•</span>
+                  <span>{provider.yearsExperience} years exp.</span>
+                </>
+              )}
+            </div>
           )}
         </div>
       </div>
