@@ -138,7 +138,7 @@ export default function Homepage({ showAuth, onAuthClick, onAuthClose }: Homepag
             <div className="absolute inset-0 bg-gradient-to-r from-[#1e40af]/20 via-transparent to-[#06b6d4]/20 mix-blend-overlay"></div>
             
             {/* Subtle grid pattern */}
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.03%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%221%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-10"></div>
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.03%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%221%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-60"></div>
             
             {/* Gradient overlay for text readability */}
             <div className="absolute inset-0 bg-gradient-to-b from-[#0d182c]/70 via-[#0d182c]/50 to-[#0d182c]/80"></div>
