@@ -150,7 +150,7 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
       }
     } catch (error) {
       console.error('OpenRouter API error:', error);
-      // Always return fallback response instead of throwing error
+      // Always return fallback response - never throw errors
       return getFallbackResponse(userMessage);
     }
   };
@@ -162,31 +162,19 @@ export default function ChatAssistant({ isOpen, onToggle }: ChatAssistantProps) 
       id: Date.now().toString(),
       type: 'user',
       content: inputMessage.trim(),
-      timestamp: new Date()
+    // Get response (always returns a response, never throws)
+    const responseContent = await getOpenRouterResponse(userMessage.content);
+    
+    const assistantResponse: Message = {
+      id: (Date.now() + 1).toString(),
+      type: 'assistant',
+      content: responseContent,
+      timestamp: new Date(),
+      category: 'business'
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-    setIsTyping(true);
-
-    try {
-      // Get response from OpenRouter API
-      const responseContent = await getOpenRouterResponse(userMessage.content);
-      
-      const assistantResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: responseContent,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, assistantResponse]);
-    } catch (error) {
-      // This should never happen now since getOpenRouterResponse always returns a response
-      console.error('Unexpected error in handleSendMessage:', error);
-    } finally {
-      setIsTyping(false);
-    }
+    setMessages(prev => [...prev, assistantResponse]);
+    setIsTyping(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
