@@ -54,6 +54,8 @@ export default function AICoach({ provider }: AICoachProps) {
   const [insights, setInsights] = useState<BusinessInsight[]>([]);
   const [apiError, setApiError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // OpenRouter API configuration
   const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
@@ -66,11 +68,25 @@ export default function AICoach({ provider }: AICoachProps) {
   }, [provider]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    // Only auto-scroll if we should and there are messages
+    if (shouldAutoScroll && messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages, shouldAutoScroll]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Handle scroll events to determine if user is at bottom
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50; // 50px threshold
+      setShouldAutoScroll(isAtBottom);
+    }
   };
 
   const initializeCoach = () => {
@@ -247,6 +263,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setIsTyping(true);
+    setShouldAutoScroll(true); // Enable auto-scroll when sending message
 
     try {
       const responseContent = await getAIResponse(userMessage.content);
@@ -375,7 +392,12 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
         {activeTab === 'chat' && (
           <div className="h-full flex flex-col">
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div 
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto p-4 space-y-4"
+              style={{ scrollBehavior: 'smooth' }}
+            >
               {messages.map((message) => (
                 <div
                   key={message.id}
@@ -491,6 +513,7 @@ Keep responses conversational, encouraging, and under 200 words. Include specifi
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      setShouldAutoScroll(true); // Enable auto-scroll when clicking suggestions
                       setInputMessage(suggestion);
                     }}
                     className="text-xs bg-slate-700 hover:bg-slate-600 text-[#cbd5e1] px-3 py-1 rounded-full transition-colors"
