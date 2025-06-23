@@ -38,8 +38,8 @@ export default function LocationSearchBar({ onSearch, loading }: LocationSearchB
   // Initialize map when showMap becomes true
   useEffect(() => {
     if (showMap && mapContainer.current && !map.current) {
-      const currentLat = userLocation?.lat || 40.7128;
-      const currentLng = userLocation?.lng || -74.006;
+      const currentLat = userLocation?.lat || -26.2041;
+      const currentLng = userLocation?.lng || 28.0473;
       
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
